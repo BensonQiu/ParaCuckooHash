@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Concurrent, In-Memory Key-Value Store</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/half-slider.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Key-Value Store</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li>
+                        <a href="#">Project Proposal</a>
+                    </li>
+                    <!-- <li> -->
+                        <!-- <a href="#">Services</a> -->
+                    <!-- </li> -->
+                    <!-- <li> -->
+                        <!-- <a href="#">Contact</a> -->
+                    <!-- </li> -->
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+
+    <br><br><br><br>
+
+    <!-- Page Content -->
+    <div class="container">
+
+        <div class="row">
+            <div class="col-lg-12">
+                <h1><center>Concurrent, In-Memory Key-Value Store</center></h1>
+                <h4><center>Team Members: Benson Qiu and Tommy Hung</center><h4>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <h1>Project Proposal</h1>
+                
+                <hr>
+
+                <h2>Summary</h2>
+                <p>We are going to implement and benchmark several algorithms for a high performance, concurrent, in-memory key-value store. Our code will be tested on an Intel Xeon Phi coprocessor (Latedays cluster) and Intel i7 Haswell series processors (Gates machines).</p>
+
+                <hr>
+
+                <h2>Background</h2>
+                <p>An in-memory key-value store is a non-relational database designed for storing, retrieving, and managing hash tables. One such key-value store is Memcached, an in-memory key-value store for small chunks of arbitrary data. Memcached is intended for use in speeding up dynamic web applications by alleviating database load.<sup>1</sup></p>
+
+                <center>
+                <img src="img/memcached.jpg" alt="Memcached" style="width:75%;height:75%;">
+                </center>
+
+                <p>Memcached implements a simple key-value interface with several commands: SET/ADD/REPLACE(key, value), GET(key), and DELETE(key). Internally, it uses a hash table with separate chaining to index key-value entries. These entries are also in a doubly linked list sorted by their most recent access time. A least recently used (LRU) policy is used to evict entries when the key-value store is full.<sup>1</sup> An entry in the key-value store uses one pointer for chaining in the hash table and two pointers for the doubly linked list, which introduces significant memory overhead for small entries in the key-value store. Memcached uses global locks to protect its core data structures, and previous work has shown that this locking prevents Memcached from scaling up on multi-core CPUs.<sup>2</sup></p>
+
+                <hr>
+
+                <h2>Challenge</h2>
+                <p>Our key-value store implementation will focus on maximizing concurrent performance and memory efficiency.</p>
+
+                <p><b>Concurrent Performance</b>: Memcached uses a single global lock both of its internal data structures (hash table and doubly linked list), which makes its implementation inherently sequential.</p>
+                
+                <p><b>Memory Efficiency</b>: Memcached's implementation uses three pointers for each entry in the key-value store, one for the chain in the hash table and two for the prev/next pointers in the doubly linked list. Since Memcached is designed for small chunks of data, using three pointers per entry is inefficient.</p>
+
+                <p><b>Challenge:</b> We will implement several algorithms for a concurrent, in-memory key-value store. Our final implementation will parallelize well to concurrent workloads and be more memory efficient by reducing the number of pointers required per entry. Concurrently accessing and modifying a shared data structure is inherently challenging and prone to concurrency issues such as deadlock and race condtions. Also, we expect to spend a significant amount of time researching and implementing advanced algorithms such as cuckoo hashing and optimistic cuckoo hashing.</p>
+
+                <hr>
+
+                <h2>Resources</h2>
+                <p>We will be using Intel i7 Haswell series processors from the Gates machines and the Intel Xeon Phi coprocessor from the Latedays cluster.</p>
+
+                <hr>
+
+                <h2>Goals and Deliverables</h2>
+                <p>The main question we are trying to answer is how much of a speedup different implementations can achieve in comparison to a simple sequential version of an in-memory database. If we have time, we also want to investigate memory efficiency of our various implementations.</p>
+
+                <p>We plan to benchmark and compare our implementations by measuring the throughput of read and write operations on the database.</p>
+
+                <hr>
+
+                <h4>Things we Plan to Implement:</h4>
+                <ol>
+                    <li>Sequential version using a hash table and a doubly linked list for cache management.</li>
+                    <li>Coarse grained parallel implementation of (1) using chain-level locks.</li>
+                    <li>Fine grained parallel implementation using hand-over locking for the linked lists.</li>
+                    <li>Coarse grained parallel implementation using cuckoo hashing.</li>
+                    <li>Fine grained parallel implementation using optimistic concurrent cuckoo hashing.</li>
+                </ol>
+                
+                <hr>
+
+                <h4>Hope to Achieve:</h4>
+                <ol>
+                    <li>Measure memory efficiency of our various key-value store implementations.</li>
+                    <li>Distribute the key-value store across multiple nodes and measure total throughput.</li>
+                </ol>
+
+                <hr>
+
+                <h4>Performance Goals:</h4>
+                <p>We plan to create speedup graphs for all of our implementations. For the implementations involving cuckoo hashing and optimistic concurrent cuckoo hashing, we will also see how speedup varies as we change the workload (percentage of read/write requests). By the time we reach our final implementation with optimistic cuckoo hashing, we hope to achieve a 10x speedup over the sequential version with 97.5% read requests and 2.5% write requests on the Latedays cluster. This is based on metrics that come from Fan's paper.<sup>2</sup> The system that they used is similar to the Latedays cluster.</p>
+
+                <hr>
+
+                <h2>Platform</h2>
+                <p>Our project will be implemented in C++ and should work on a variety of platforms. We are focusing on the Xeon Phi in the Latedays cluster because the specs somewhat resemble the hardware used in Fan's paper.<sup>2</sup> Also, it is one of the more powerful resources we have access to, and we want to see the maximum throughput that we can achieve.</p>
+
+                <hr>
+
+                <h2>Schedule</h2>
+
+                <table border="1" style="width:100%">
+                  <tr>
+                    <td><b>&nbsp;Week</b></td>
+                    <td><b>&nbsp;Goal</b></td> 
+                  </tr>
+                  <tr>
+                    <td>&nbsp;4/3 - 4/9</td>
+                    <td>&nbsp;Read literature; implement sequential key-value store</td> 
+                  </tr>
+                  <tr>
+                    <td>&nbsp;4/10 - 4/16</td>
+                    <td>&nbsp;Implement coarse and fine grained key-value store</td> 
+                  </tr>
+                  <tr>
+                    <td>&nbsp;4/17 - 4/23</td>
+                    <td>&nbsp;Implement cuckoo hashing</td> 
+                  </tr>
+                  <tr>
+                    <td>&nbsp;4/24 - 4/30</td>
+                    <td>&nbsp;Begin optimistic cuckoo hashing implementation</td> 
+                  </tr>
+                  <tr>
+                    <td>&nbsp;5/1 - 5/9</td>
+                    <td>&nbsp;Finish optimistic cuckoo hashing implementation</td> 
+                  </tr>
+                </table>
+
+                <hr>
+
+                <h2>References</h2>
+                <p><sup>1</sup> https://memcached.org/</p>
+                <p><sup>2</sup> http://www.cs.cmu.edu/~dga/papers/memc3-nsdi2013.pdf</p>
+            </div>
+        </div>
+
+        <hr>
+
+    </div>
+
+    <!-- /.container -->
+
+    <!-- jQuery -->
+    <script src"js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- Script to Activate the Carousel -->
+    <script>
+    $('.carousel').carousel({
+        interval: 5000 //changes the speed
+    })
+    </script>
+
+</body>
+
+</html>
