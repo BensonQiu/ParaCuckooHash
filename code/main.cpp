@@ -3,13 +3,15 @@
 #include <pthread.h>
 
 #include "hash_map.h"
+// #include "common/hash.c"
 #include "coarse_hash_map.h"
+#include "cuckoo_hash_map.h"
 #include "common/CycleTimer.h"
 #include <boost/thread/locks.hpp>
 
 #define NUM_THREADS 12
-#define NUM_BUCKETS 35 * 1000 * 1000
-#define NUM_OPS 50 * 1000 * 1000
+#define NUM_BUCKETS 5 * 1000 * 1000
+#define NUM_OPS 10 * 1000 * 1000
 
 struct WorkerArgs {
     CoarseHashMap<int,std::string> *my_map;
@@ -81,7 +83,7 @@ void benchmark_coarse_hashmap() {
 
     best_time = 1e30;
 
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 3; i++) {
         start_time = CycleTimer::currentSeconds();
         
         CoarseHashMap<int, std::string> my_map(NUM_BUCKETS);
@@ -113,7 +115,7 @@ void benchmark_coarse_hashmap() {
     // Time the built-in implementation.
     best_time = 1e30;
 
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 3; i++) {
         start_time = CycleTimer::currentSeconds();
 
         std::unordered_map<int,std::string> ref_map;
@@ -128,11 +130,28 @@ void benchmark_coarse_hashmap() {
 
 }
 
+void benchmark_cuckoo_hashmap() {
+    CuckooHashMap<std::string> my_map(10);
+    for (int i = 0; i < 5; i++) {
+        std::string key = std::to_string(i);
+        my_map.put(key, key);
+    }
+    for (int i = 0; i < 5; i++) {
+        std::string key = std::to_string(i);
+        std::cout << my_map.get(key) << std::endl;
+    }
+}
+
 
 int main() {
-
-    benchmark_hashmap();
-    benchmark_coarse_hashmap();
     
+    // uint32_t h1, h2;
+    // hashlittle2((void*)"t0by", 4, &h1, &h2);
+    // std::cout << h1 << " " << h2 << std::endl;
+
+    // benchmark_hashmap();
+    // benchmark_coarse_hashmap();
+    benchmark_cuckoo_hashmap();
+
     return 0;
 }
