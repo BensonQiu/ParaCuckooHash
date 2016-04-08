@@ -59,40 +59,47 @@ class CuckooHashMap {
 
 		T get(std::string key) {
 		    // Hash to two buckets.
-		    // uint32_t h1, h2;
-		    // hashlittle2((void*)&key, key.length(), &h1, &h2);
-			std::hash<std::string> hasher1;
-			boost::hash<std::string> hasher2;
+		    uint32_t h1, h2;
+		    h1 = 0;
+		    h2 = 0;
 
-			int h1 = hasher1(key);
+		    hashlittle2(key.c_str(), key.length(), &h1, &h2);
+		    //std::hash<std::string> hasher1;
+		    //boost::hash<std::string> hasher2;
+
+			//int h1 = hasher1(key);
 			// unsigned char tag = 'a';
 		    //std::cout << "Get Key: " << key << ", Hash 1: " << h1 << ", Hash 2: " << h2 << std::endl;
 		    h1 = h1 % m_num_buckets;
 		    // unsigned char tag = tag_hash(key);
-		    if (h1 < 0)
-		    	h1 = m_num_buckets - abs(h1);
-		   	h1 *= SLOTS_PER_BUCKET;
+		    if (h1 < 0){
+		      h1 = m_num_buckets - abs(h1);
+		    }
+		    h1 *= SLOTS_PER_BUCKET;
 
 		    // Look at the first bucket.
 		    for (int i = (int)h1; i < (int)h1 + SLOTS_PER_BUCKET; i++) {
 		    	HashPointer* hash_pointer = m_table[i];
-		    	if (hash_pointer != NULL && tag == hash_pointer->tag) {
+		    	if (hash_pointer != NULL) {
 		    		HashEntry* hash_entry = hash_pointer->ptr;
 		    		if (key == hash_entry->key)
 		    			return hash_entry->val;
 		    	}
 		    }
 
-			int h2 = hasher2(key);
+		    //int h2 = hasher2(key);
 		    h2 = h2 % m_num_buckets;
-		    if (h2 < 0)
+
+		    if (h2 < 0){
 		    	h2 = m_num_buckets - abs(h2);
-		   	h2 *= SLOTS_PER_BUCKET;
+		    }
+
+		    h2 *= SLOTS_PER_BUCKET;
 
 		    // Look at the second bucket.
 			for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++) {
 		    	HashPointer* hash_pointer = m_table[i];
-		    	if (hash_pointer != NULL && tag == hash_pointer->tag) {
+		    	if (hash_pointer != NULL) {
 		    		HashEntry* hash_entry = hash_pointer->ptr;
 		    		if (key == hash_entry->key)
 		    			return hash_entry->val;
@@ -101,26 +108,31 @@ class CuckooHashMap {
 			throw KeyNotFoundError(key.c_str());
 		}
 
-		void put(std::string key, T val) {			
+		void put(std::string key, T val) {
 			// Hash to two buckets.
 		    int num_iters = 0;
 			std::string curr_key = key;
 			T curr_val = val;
 
-			std::hash<std::string> hasher1;
-			boost::hash<std::string> hasher2;
+			//std::hash<std::string> hasher1;
+			//boost::hash<std::string> hasher2;
 
 		    while (num_iters < MAX_ITERS) {
 
 		    	num_iters ++;
+			uint32_t h1, h2;
+			h1 = 0;
+			h2 = 0;
 
-				int h1 = hasher1(curr_key);
-				int h2 = hasher2(curr_key);
+			hashlittle2(curr_key.c_str(), curr_key.length(), &h1, &h2);
+			//int h1 = hasher1(curr_key);
+			//	int h2 = hasher2(curr_key);
 
 			    //std::cout << "Put Key: " << curr_key << ", Hash 1: " << h1 << ", Hash 2: " << h2 << std::endl;
 
 			    h1 = h1 % m_num_buckets;
 			    h2 = h2 % m_num_buckets;
+
 
 			    if (h1 < 0)
 			    	h1 = m_num_buckets - abs(h1);
@@ -142,7 +154,7 @@ class CuckooHashMap {
 
 			    // Look at the first bucket.
 			    for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
-	
+
 			    	HashPointer* hash_pointer = m_table[i];
 
 			    	if (hash_pointer == NULL) {
@@ -155,9 +167,9 @@ class CuckooHashMap {
 			    		hash_pointer->tag = tag;
 			    		hash_pointer->ptr = hash_entry;
 			    		m_table[i] = hash_pointer;
-			    		
+
 			    		//std::cout <<"Put Key: " << curr_key << " in slot index: " << i << std::endl;
-			    		
+
 			    		return;
 			    	}
 			    }
