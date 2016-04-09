@@ -50,7 +50,7 @@ class HashMap {
 				curr = curr->next;
 			}
 
-			throw KeyNotFoundError(std::to_string(key).c_str());
+			throw KeyNotFoundError(key.c_str());
 		}
 
 		float get_load_factor() {
