@@ -39,53 +39,33 @@ void benchmark_hashmap() {
 
     std::cout << "***** Benchmarking sequential hashmap..." << std::endl;
 
-    HashMap<int, std::string> my_map(NUM_BUCKETS);
-    double start_time, end_time, best_time;
+    double start_time, end_time, best_put_time, best_get_time;
 
     // Time my sequential implementation. Output the best of three times.
-    best_time = 1e30;
+    best_put_time = 1e30;
+    best_get_time = 1e30;
     for (int i = 0; i < 3; i++) {
+        HashMap<std::string, std::string> my_map(NUM_BUCKETS);
+
+        // PUT
         start_time = CycleTimer::currentSeconds();
-        
         for (int j = 0; j < NUM_OPS; j++) {
-            my_map.put(j, "random_value" + std::to_string(j));
+            my_map.put(std::to_string(j), "random_value" + std::to_string(j));
         }
-
         end_time = CycleTimer::currentSeconds();
-        best_time = std::min(best_time, end_time-start_time);
-    }
-    std::cout << "My implementation put: " << best_time << "\n";
+        best_put_time = std::min(best_put_time, end_time-start_time);
 
 
-    best_time = 1e30;
-    for (int i = 0; i < 3; i++) {
+        // GET
         start_time = CycleTimer::currentSeconds();
-        
         for (int j = 0; j < NUM_OPS; j++) {
-            my_map.get(j);
+            my_map.get(std::to_string(j));
         }
-
         end_time = CycleTimer::currentSeconds();
-        best_time = std::min(best_time, end_time-start_time);
+        best_get_time = std::min(best_get_time, end_time-start_time);
     }
-    std::cout << "My implementation get: " << best_time << "\n";
-
-
-    // Time the built-in implementation.
-    // best_time = 1e30;
-
-    // for (int i = 0; i < 3; i++) {
-    //     start_time = CycleTimer::currentSeconds();
-
-    //     std::unordered_map<int,std::string> ref_map;
-    //     for (int j = 0; j < NUM_OPS; j++) {
-    //         ref_map.insert(std::pair<int,std::string>(j, "random_value" + std::to_string(j)));
-    //     }
-
-    //     end_time = CycleTimer::currentSeconds();
-    //     best_time = std::min(best_time, end_time-start_time);
-    // }
-    // std::cout << "Built-in time: " << best_time << "\n";
+    std::cout << "My implementation put: " << best_put_time << "\n";
+    std::cout << "My implementation get: " << best_get_time << "\n";
 
 }
 
@@ -149,6 +129,8 @@ void benchmark_coarse_hashmap() {
 
 void benchmark_cuckoo_hashmap() {
 
+    std::cout << "***** Benchmarking cuckoo hashmap..." << std::endl;
+
     double start_time, end_time, best_put_time, best_get_time;
 
     best_put_time = 1e30;
@@ -177,28 +159,8 @@ void benchmark_cuckoo_hashmap() {
     }
     std::cout << "Cuckoo put time: " << best_put_time << "\n";
     std::cout << "Cuckoo get time: " << best_get_time << "\n";
-
-    // my_map.debug();
-
-    // best_time = 1e30;
-    // for (int i = 0; i < 3; i++) {
-    //     start_time = CycleTimer::currentSeconds();
-
-    //     for (int j = 0; j < NUM_OPS; j++) {
-    //         std::string key = std::to_string(j);
-    //         my_map.get(key);
-    //     }
-
-    //     end_time = CycleTimer::currentSeconds();
-    //     best_time = std::min(best_time, end_time-start_time);
-    // }
-    // std::cout << "Cuckoo get time: " << best_time << "\n";
-
-    // for (int i = 0; i < 3500; i++) {
-    //     std::string key = std::to_string(i);
-    //     // std::cout << my_map.get(key) << std::endl;
-    // }
 }
+
 
 // void benchmark_better_cuckoo_hashmap() {
 
@@ -207,13 +169,12 @@ void benchmark_cuckoo_hashmap() {
 //     best_put_time = 1e30;
 //     best_get_time = 1e30;
 //     for (int i = 0; i < 3; i++) {
-//         BetterCuckooHashMap<std::string> my_map(NUM_BUCKETS*50);
-
+//         BetterCuckooHashMap<std::string> my_map(50000);
 
 //         // PUT
 //         start_time = CycleTimer::currentSeconds();
 
-//         for (int j = 0; j < NUM_OPS; j++) {
+//         for (int j = 0; j < 25000; j++) {
 //             std::string key = std::to_string(j);
 //             my_map.put(key, "value" + key);
 //         }
@@ -225,7 +186,7 @@ void benchmark_cuckoo_hashmap() {
 //         // GET
 //         start_time = CycleTimer::currentSeconds();
 
-//         for (int j = 0; j < NUM_OPS; j++) {
+//         for (int j = 0; j < 25000; j++) {
 //             std::string key = std::to_string(j);
 //             my_map.get(key);
 //         }
@@ -236,26 +197,6 @@ void benchmark_cuckoo_hashmap() {
 //     }
 //     std::cout << "Cuckoo put time: " << best_put_time << "\n";
 //     std::cout << "Cuckoo get time: " << best_get_time << "\n";
-
-//     // my_map.debug();
-
-//     // best_time = 1e30;
-//     // for (int i = 0; i < 3; i++) {
-//     //     start_time = CycleTimer::currentSeconds();
-
-//     //     for (int j = 0; j < NUM_OPS; j++) {
-//     //         std::string key = std::to_string(j);
-//     //         my_map.get(key);
-//     //     }
-
-//     //     end_time = CycleTimer::currentSeconds();
-//     //     best_time = std::min(best_time, end_time-start_time);
-//     // }
-
-//     // for (int i = 0; i < 3500; i++) {
-//     //     std::string key = std::to_string(i);
-//     //     // std::cout << my_map.get(key) << std::endl;
-//     // }
 // }
 
 
@@ -267,8 +208,7 @@ int main() {
 
     // benchmark_hashmap();
     // benchmark_coarse_hashmap();
-    while (true)
-        benchmark_cuckoo_hashmap();
+    benchmark_cuckoo_hashmap();
 
     // benchmark_better_cuckoo_hashmap();
 
@@ -298,6 +238,9 @@ int main() {
     //     double end_time = CycleTimer::currentSeconds();
     //     std::cout << end_time-start_time << std::endl;
     // }
+
+            // uint32_t r =  hv & m_tagmask;
+            // return (unsigned char) r + (r == 0);
 
     return 0;
 }
