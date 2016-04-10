@@ -4,9 +4,8 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
-#include <boost/functional/hash.hpp>
 
-#include "common/hash.c"
+#include "common/hash.h"
 #include "common/errors.h"
 
 
@@ -33,14 +32,23 @@ class BetterCuckooHashMap {
             // Hash to two buckets.
             uint32_t h1, h2;
 
-            h1 = hashlittle(key.c_str(), key.length(), 0);    
+            // h1 = hashlittle(key.c_str(), key.length(), 0);    
+            std::hash<std::string> hasher;
+            h1 = hasher(key);
             unsigned char tag = tag_hash(h1);
+            h2 = h1 ^ (tag * 0x5bd1e995);
 
             h1 = h1 % m_num_buckets;
-            if (h1 < 0){
-              h1 = m_num_buckets - abs(h1);
-            }
+            h2 = h2 % m_num_buckets;
+
+            if (h1 < 0)
+                h1 = m_num_buckets - abs(h1);
+
+            if (h2 < 0)
+                h2 = m_num_buckets - abs(h2);
+
             h1 *= SLOTS_PER_BUCKET;
+            h2 *= SLOTS_PER_BUCKET;
 
             // Look at the first bucket.
             for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
@@ -52,12 +60,6 @@ class BetterCuckooHashMap {
                 }
             }
 
-            h2 = (h1 ^ (tag * 0x5bd1e995)) % m_num_buckets;
-            if (h2 < 0){
-                h2 = m_num_buckets - abs(h2);
-            }
-            h2 *= SLOTS_PER_BUCKET;
-
             // Look at the second bucket.
             for (int i = h2; i < h2 + SLOTS_PER_BUCKET; i++) {
                 HashPointer hash_pointer = m_table[i];
@@ -67,8 +69,7 @@ class BetterCuckooHashMap {
                         return hash_entry->val;
                 }
             }
-            return "NOT FOUND";
-            // throw KeyNotFoundError(key.c_str());
+            throw KeyNotFoundError(key.c_str());
         }
 
 
@@ -82,7 +83,10 @@ class BetterCuckooHashMap {
                 num_iters++;
                 uint32_t h1, h2;
 
-                h1 = hashlittle(key.c_str(), key.length(), 0); 
+                // h1 = hashlittle(key.c_str(), key.length(), 0); 
+                std::hash<std::string> hasher;
+                h1 = hasher(key);
+
                 unsigned char tag = tag_hash(h1);
                 h2 = h1 ^ (tag * 0x5bd1e995);
 
@@ -112,7 +116,7 @@ class BetterCuckooHashMap {
 
                         m_table[i].tag = tag;
                         m_table[i].ptr = hash_entry;
-                        // std::cout <<"Put Key: " << curr_key << " in slot index: " << i << std::endl;
+                        // std::cout << "Put Key: " << curr_key << " in slot index: " << i << std::endl;
                         return;
                     } else if (m_table[i].ptr->key == curr_key) {
                         m_table[i].ptr->val = curr_val;
