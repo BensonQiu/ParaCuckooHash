@@ -4,9 +4,8 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
-#include <boost/functional/hash.hpp>
 
-#include "common/hash.c"
+#include "common/hash.h"
 #include "common/errors.h"
 
 
