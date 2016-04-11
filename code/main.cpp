@@ -8,14 +8,13 @@
 #include "cuckoo_hash_map.h"
 #include "better_cuckoo_hash_map.h"
 #include "common/CycleTimer.h"
-#include <boost/thread/locks.hpp>
 
-#define NUM_THREADS 12
+#define NUM_THREADS 24
 #define NUM_BUCKETS 5 * 1000 * 1000
 #define NUM_OPS 10 * 1000 * 1000
 
-// #define NUM_BUCKETS 1 * 1000 * 1000
-// #define NUM_OPS 2 * 1000 * 1000
+// #define NUM_BUCKETS 2
+// #define NUM_OPS 10
 
 struct WorkerArgs {
     CoarseHashMap<std::string,std::string> *my_map;
@@ -32,7 +31,7 @@ void *thread_send_requests(void *threadArgs) {
 
     if (member_function.compare("put") == 0) {
         for (int i = thread_ID; i < NUM_OPS; i += NUM_THREADS) {
-            my_map->put(std::to_string(i), "value" + std::to_string(i), thread_ID);
+            my_map->put(std::to_string(i), "value" + std::to_string(i));
         }
     } else if (member_function.compare("get") == 0) {
        for (int i = thread_ID; i < NUM_OPS; i += NUM_THREADS) {
@@ -114,6 +113,11 @@ void benchmark_hashmap() {
 
 void benchmark_coarse_hashmap() {
 
+    // RW 12 threads, 10M/20M: 6 put, 3.3 get
+    // RW 24 threads, 10M/20M: 4 put, 2.5 get
+    // Bucket 12 threads, 10M/20M: 6.4 put, 2.3 get
+    // Bucket 24 threads, 10M/20M: 4 put, 1.4 get
+
     std::cout << "\nBenchmarking coarse hashmap..." << std::endl;
 
     double start_time, end_time, best_put_time, best_get_time;
@@ -166,6 +170,8 @@ void benchmark_coarse_hashmap() {
         end_time = CycleTimer::currentSeconds();
         best_get_time = std::min(best_get_time, end_time-start_time);
 
+        // std::cout << best_put_time << std::endl;
+        // std::cout << best_get_time << std::endl << std::endl;
     }
     std::cout << "Coarse (" << NUM_THREADS << " threads): put: " << best_put_time << std::endl;
     std::cout << "Coarse (" << NUM_THREADS << " threads): get: " << best_get_time << std::endl;
@@ -237,20 +243,56 @@ void benchmark_better_cuckoo_hashmap() {
         }
         end_time = CycleTimer::currentSeconds();
         best_get_time = std::min(best_get_time, end_time-start_time);
-        // std::cout << best_put_time << ", " << best_get_time << std::endl;
     }
     std::cout << "BetterCuckoo put: " << best_put_time << std::endl;
     std::cout << "BetterCuckoo get: " << best_get_time << std::endl;
 }
 
 
+void benchmark_mutex_types() {
+
+    std::cout << "\nBenchmarking mutexes..." << std::endl;
+
+    double start_time, end_time, best_time;
+
+    best_time = 1e30;
+
+    for (int i = 0; i < 3; i++) {
+        start_time = CycleTimer::currentSeconds();
+        boost::shared_mutex mutex;
+        for (int j = 0; j < NUM_OPS; j++) {
+            boost::shared_lock<boost::shared_mutex> lock(mutex);
+        }
+        end_time = CycleTimer::currentSeconds();
+        best_time = std::min(best_time, end_time-start_time);
+    }
+    std::cout << "Shared mutex time: " << best_time << std::endl;
+
+    for (int i = 0; i < 3; i++) {
+        start_time = CycleTimer::currentSeconds();
+        std::mutex mutex;
+        for (int j = 0; j < NUM_OPS; j++) {
+            mutex.lock();
+            mutex.unlock();
+        }
+        end_time = CycleTimer::currentSeconds();
+        best_time = std::min(best_time, end_time-start_time);
+    }
+    std::cout << "Reg mutex time: " << best_time << std::endl;
+}
+
+
 int main() {
+
+    std::cout << "Starting benchmark with NUM_BUCKETS: " << NUM_BUCKETS
+              << " and NUM_OPS: " << NUM_OPS << std::endl;
 
     benchmark_builtin_unorderedmap();
     benchmark_hashmap();
     benchmark_coarse_hashmap();
     benchmark_cuckoo_hashmap();
     benchmark_better_cuckoo_hashmap();
+    benchmark_mutex_types();
 
     return 0;
 }
