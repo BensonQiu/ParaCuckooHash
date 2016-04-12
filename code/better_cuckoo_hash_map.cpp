@@ -136,7 +136,7 @@ void BetterCuckooHashMap<T>::put(std::string key, T val) {
             }
         }
 
-        int index = rand() % (2 * SLOTS_PER_BUCKET);
+        int index = fastrand() % (2 * SLOTS_PER_BUCKET);
         HashPointer* temp_hash_pointer;
         if (0 <= index && index < SLOTS_PER_BUCKET)
             temp_hash_pointer = &m_table[h1 + index];

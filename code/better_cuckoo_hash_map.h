@@ -34,6 +34,12 @@ class BetterCuckooHashMap {
 
         unsigned char tag_hash(const uint32_t hv);
 
+        inline int fastrand() const {
+            int g_seed = (214013*g_seed+2531011);
+            return (g_seed>>16)&0x7FFF;
+        }
+
+
 };
 
 #include "better_cuckoo_hash_map.cpp"

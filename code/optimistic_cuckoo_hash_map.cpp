@@ -52,10 +52,6 @@ T OptimisticCuckooHashMap<T>::get(std::string key) {
     Try:
     uint32_t key_version_start = __sync_fetch_and_add(&key_version_index, 0);
 
-    if (key.compare("744304") == 0) {
-        std::cout << "Getting key 744304 in bucket 1: " << h1 << " and bucket 2: " << h2 << std::endl;
-    }
-
     // Look at the first bucket.
     for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
         HashEntry* hash_entry = m_table[i];
@@ -124,10 +120,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
     while (num_iters < MAX_ITERS) {
         num_iters++;
 
-
-        if (curr_key.compare("744304") == 0) {
-            std::cout << "Put Key: " << curr_key << ", Bucket 1: " << h1 << ", Bucket 2: " << h2 << std::endl;
-        }
+        // std::cout << "Put Key: " << curr_key << ", Bucket 1: " << h1 << ", Bucket 2: " << h2 << std::endl;
 
         // Look at the first bucket.
         for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
@@ -139,9 +132,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
                 hash_entry->key = curr_key;
                 hash_entry->val = curr_val;
                 m_table[i] = hash_entry;
-                if (curr_key.compare("744304") == 0) {
-                    std::cout <<"Put Key: " << curr_key << " in slot index: " << i << std::endl;
-                }
+                // std::cout <<"Put Key: " << curr_key << " in slot index: " << i << std::endl;
                 return;
             } else if (hash_entry->key == curr_key) {
                 __sync_fetch_and_add(&key_version_index, 1);
@@ -159,9 +150,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
                 hash_entry->key = curr_key;
                 hash_entry->val = curr_val;
                 m_table[i] = hash_entry;
-                if (curr_key.compare("744304") == 0) {
-                    std::cout <<"Put Key: " << curr_key << " in slot index: " << i << std::endl;
-                }
+                // std::cout <<"Put Key: " << curr_key << " in slot index: " << i << std::endl;
                 return;
             } else if (hash_entry->key == curr_key) {
                 __sync_fetch_and_add(&key_version_index, 1);
@@ -171,7 +160,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
             }
         }
 
-        int index = rand() % (2 * SLOTS_PER_BUCKET);
+        int index = fastrand() % (2 * SLOTS_PER_BUCKET);
         HashEntry* temp_hash_entry;
         if (0 <= index && index < SLOTS_PER_BUCKET)
             temp_hash_entry = m_table[h1 + index];
