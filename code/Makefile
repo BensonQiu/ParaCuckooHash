@@ -1,6 +1,6 @@
 CC=g++
 
-CFLAGS=-std=c++11 -lpthread -lboost_system -lboost_thread common/hash.c
+CFLAGS=-std=c++11 -lpthread -lboost_system -lboost_thread
 
 TARGET=main
 
