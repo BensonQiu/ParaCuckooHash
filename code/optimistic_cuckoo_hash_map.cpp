@@ -90,6 +90,7 @@ T OptimisticCuckooHashMap<T>::get(std::string key) {
         std::cout << "Had to retry with key: " << key << std::endl;
         goto Try;
     }
+    std::cout << "Key was never found!!" << key << std::endl ;
     throw KeyNotFoundError(key.c_str());
 }
 
@@ -132,9 +133,10 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
     while (num_iters < MAX_ITERS){
       num_iters++;
 
+      //std::cout << "Looking at key: " << curr_key << " with value: " << curr_val << std::endl;
+
       // Look at first bucket
       for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++){
-
 
 	HashEntry* hash_entry = m_table[i];
 
@@ -142,8 +144,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
 	if (hash_entry == NULL){
 
 	  path.push_back(i);
-
-	  break;
+	  goto destination;
 	}
 	// key already exists, update value now and return from function
 	else if (hash_entry->key == curr_key) {
@@ -162,7 +163,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
 	if (hash_entry == NULL){
 	  path.push_back(i);
 
-	  break;
+	  goto destination;
 	}
 	// key already exists, update value now and return from function
 	else if (hash_entry->key == curr_key) {
@@ -220,6 +221,9 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
 
     }
 
+ destination:
+
+    //std::cout << "Path found: " << path.size() << std::endl;
 
 
     if (path.size() == MAX_ITERS){
@@ -227,9 +231,8 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
       return;
     }
 
+
     //Valid cuckoo path
-
-
 
     //Case 1:key finds a spot immediately
     if (path.size() == 1){
