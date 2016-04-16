@@ -57,12 +57,13 @@ T OptimisticCuckooHashMap<T>::get(std::string key) {
         HashEntry* hash_entry = m_table[i];
         if (hash_entry != NULL) {
             if (key == hash_entry->key) {
+                T val = hash_entry->val;
                 uint32_t key_version_end = __sync_add_and_fetch(&key_version_index, 0);
                 if (key_version_start & 0x1 || key_version_start != key_version_end) {
                     std::cout << "Had to retry with key: " << key << std::endl;
                     goto Try;
                 }
-                return hash_entry->val;
+                return val;
             }
         }
     }
@@ -72,12 +73,13 @@ T OptimisticCuckooHashMap<T>::get(std::string key) {
         HashEntry* hash_entry = m_table[i];
         if (hash_entry != NULL) {
             if (key == hash_entry->key) {
+                T val = hash_entry->val;
                 uint32_t key_version_end = __sync_add_and_fetch(&key_version_index, 0);
                 if (key_version_start & 0x1 || key_version_start != key_version_end) {
                     std::cout << "Had to retry with key: " << key << std::endl;
                     goto Try;
                 }
-                return hash_entry->val;
+                return val;
             }
         }
     }
@@ -188,6 +190,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
         key_version_index = h1 % NUM_KEY_VERSION_COUNTERS;
 
         // ***** END TODO: DO THIS IN A HELPER METHOD *****
+
         __sync_fetch_and_add(&key_version_index, 1);
         temp_hash_entry->key = curr_key;
         temp_hash_entry->val = curr_val;
