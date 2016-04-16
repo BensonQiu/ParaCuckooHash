@@ -4,7 +4,8 @@
 
 #include "common/hash.h"
 #include "common/errors.h"
-
+#include <vector>
+#include <iterator>
 
 template <typename T>
 OptimisticCuckooHashMap<T>::OptimisticCuckooHashMap(int num_buckets) {
@@ -119,89 +120,162 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
 
     int key_version_index = h1 % NUM_KEY_VERSION_COUNTERS;
 
-    while (num_iters < MAX_ITERS) {
-        num_iters++;
 
-        // std::cout << "Put Key: " << curr_key << ", Bucket 1: " << h1 << ", Bucket 2: " << h2 << std::endl;
+    // exact index of the elements that we are moving around
+    std::vector<int> path;
+    std::vector<int> key_version_array;
 
-        // Look at the first bucket.
-        for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
 
-            HashEntry* hash_entry = m_table[i];
 
-            if (hash_entry == NULL) {
-                HashEntry* hash_entry = new HashEntry();
-                hash_entry->key = curr_key;
-                hash_entry->val = curr_val;
-                m_table[i] = hash_entry;
-                // std::cout <<"Put Key: " << curr_key << " in slot index: " << i << std::endl;
-                return;
-            } else if (hash_entry->key == curr_key) {
-                __sync_fetch_and_add(&key_version_index, 1);
-                hash_entry->val = curr_val;
-                __sync_fetch_and_add(&key_version_index, 1);
-                return;
-            }
-        }
 
-        // Look at the second bucket.
-        for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++) {
-            HashEntry* hash_entry = m_table[i];
-            if (hash_entry == NULL) {
-                HashEntry* hash_entry = new HashEntry();
-                hash_entry->key = curr_key;
-                hash_entry->val = curr_val;
-                m_table[i] = hash_entry;
-                // std::cout <<"Put Key: " << curr_key << " in slot index: " << i << std::endl;
-                return;
-            } else if (hash_entry->key == curr_key) {
-                __sync_fetch_and_add(&key_version_index, 1);
-                hash_entry->val = curr_val;
-                __sync_fetch_and_add(&key_version_index, 1);
-                return;
-            }
-        }
+    // find the path
+    while (num_iters < MAX_ITERS){
+      num_iters++;
 
-        int index = fastrand() % (2 * SLOTS_PER_BUCKET);
-        HashEntry* temp_hash_entry;
-        if (0 <= index && index < SLOTS_PER_BUCKET)
-            temp_hash_entry = m_table[h1 + index];
-        else
-            temp_hash_entry = m_table[h2 + index - SLOTS_PER_BUCKET];
+      // Look at first bucket
+      for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++){
 
-        std::string temp_key = temp_hash_entry->key;
-        T temp_val = temp_hash_entry->val;
 
-        // ***** BEGIN TODO: DO THIS IN A HELPER METHOD *****
-        hashlittle2(temp_key.c_str(), temp_key.length(), &h1, &h2);
+	HashEntry* hash_entry = m_table[i];
 
-        h1 = h1 % m_num_buckets;
-        h2 = h2 % m_num_buckets;
+	//found empty spot for the item
+	if (hash_entry == NULL){
 
-        if (h1 < 0)
-            h1 = m_num_buckets - abs(h1);
+	  path.push_back(i);
 
-        if (h2 < 0)
-            h2 = m_num_buckets - abs(h2);
+	  break;
+	}
+	// key already exists, update value now and return from function
+	else if (hash_entry->key == curr_key) {
+	  __sync_fetch_and_add(&key_version_index, 1);
+	  hash_entry->val = curr_val;
+	  __sync_fetch_and_add(&key_version_index, 1);
+	  return;
+	}
+      }
+      // Look at second bucket
+      for (int i = h2; i < h2 + SLOTS_PER_BUCKET; i++){
 
-        h1 *= SLOTS_PER_BUCKET;
-        h2 *= SLOTS_PER_BUCKET;
+	HashEntry* hash_entry = m_table[i];
 
-        key_version_index = h1 % NUM_KEY_VERSION_COUNTERS;
+	//found empty spot for the item
+	if (hash_entry == NULL){
+	  path.push_back(i);
 
-        // ***** END TODO: DO THIS IN A HELPER METHOD *****
+	  break;
+	}
+	// key already exists, update value now and return from function
+	else if (hash_entry->key == curr_key) {
+	  __sync_fetch_and_add(&key_version_index, 1);
+	  hash_entry->val = curr_val;
+	  __sync_fetch_and_add(&key_version_index, 1);
+	  return;
+	}
+      }
 
-        __sync_fetch_and_add(&key_version_index, 1);
-        temp_hash_entry->key = curr_key;
-        temp_hash_entry->val = curr_val;
-        __sync_fetch_and_add(&key_version_index, 1);
+      // Can't place key in the existing buckets
+      // evict one existing key
 
-        std::cout << "Swap " << curr_key << " with " << temp_key << std::endl;
+      // choose which guy to evict and place into path
 
-        curr_key = temp_key;
-        curr_val = temp_val;
+      int index = fastrand() % (2 * SLOTS_PER_BUCKET);
+      int real_index = 0;
+      HashEntry* temp_hash_entry;
+      if (0 <= index && index < SLOTS_PER_BUCKET)
+	real_index = h1 + index;
+      else
+	real_index = h2 + index - SLOTS_PER_BUCKET;
+
+
+      path.push_back(real_index);
+
+
+      std::string temp_key = temp_hash_entry->key;
+      T temp_val = temp_hash_entry->val;
+
+      // ***** BEGIN TODO: DO THIS IN A HELPER METHOD *****
+      hashlittle2(temp_key.c_str(), temp_key.length(), &h1, &h2);
+
+      h1 = h1 % m_num_buckets;
+      h2 = h2 % m_num_buckets;
+
+      if (h1 < 0)
+	h1 = m_num_buckets - abs(h1);
+
+      if (h2 < 0)
+	h2 = m_num_buckets - abs(h2);
+
+      h1 *= SLOTS_PER_BUCKET;
+      h2 *= SLOTS_PER_BUCKET;
+
+      key_version_index = h1 % NUM_KEY_VERSION_COUNTERS;
+
+      key_version_array.push_back(key_version_index);
+
+
+      // Now move on to the next iteration and try to place evicted key
+      // into a bucket
+      curr_key = temp_key;
+      curr_val = temp_val;
 
     }
 
-    std::cout << "Abort" << std::endl;
+
+
+    if (path.size() == MAX_ITERS){
+      std::cout << "Abort" << std::endl;
+      return;
+    }
+
+    //Valid cuckoo path
+
+
+
+    //Case 1:key finds a spot immediately
+    if (path.size() == 1){
+      int index = path.front();
+      HashEntry* hash_entry = new HashEntry();
+      hash_entry->key = key;
+      hash_entry->val = val;
+      m_table[index] = hash_entry;
+      return;
+    }
+
+    //Case 2: Multiple keys for this path
+
+    // Reverse iterator for key version indices
+    std::vector<int>::reverse_iterator key_version_iterator = key_version_array.rbegin();
+    std::vector<int>::reverse_iterator path_iterator = path.rbegin();
+
+    int first_index = path.front();
+    int to_index = *path_iterator++;
+
+    for (; path_iterator != path.rend(); path_iterator++) {
+
+      int from_index = *path_iterator;
+      int key_version_index = *key_version_iterator++;
+
+      // if we are looking at the first element,
+      // switch with actual key
+      if (to_index == first_index) {
+	HashEntry* hash_entry = new HashEntry();
+	hash_entry->key = key;
+	hash_entry->val = val;
+	m_table[to_index] = hash_entry;
+      }
+      //
+      else {
+	__sync_fetch_and_add(&key_version_index, 1);
+	HashEntry* from_hash_entry = m_table[from_index];
+	HashEntry* to_hash_entry = new HashEntry();
+	to_hash_entry->key = from_hash_entry->key;
+	to_hash_entry->val = from_hash_entry->val;
+
+	__sync_fetch_and_add(&key_version_index, 1);
+
+
+	to_index = from_index;
+      }
+    }
+
 }
