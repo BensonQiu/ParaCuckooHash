@@ -1,7 +1,8 @@
 #include <iostream>
 #include <unordered_map>
-#include <pthread.h>
 #include <cassert>
+#include <stdlib.h>
+#include <pthread.h>
 
 #include "hash_map.h"
 #include "common/hash.h"
@@ -12,12 +13,12 @@
 #include "circular_queue.h"
 #include "common/CycleTimer.h"
 
-#define NUM_THREADS 24
-#define NUM_BUCKETS 5 * 1000 * 1000
-#define NUM_OPS 10 * 1000 * 1000
+#define NUM_THREADS 48
+#define NUM_BUCKETS 10 * 1000 * 1000
+#define NUM_OPS 20 * 1000 * 1000
 
-// #define NUM_BUCKETS 1 * 1000 * 1000
-// #define NUM_OPS 2 * 1000 * 1000
+// #define NUM_BUCKETS 2 * 1000 * 1000
+// #define NUM_OPS 4 * 1000 * 1000
 
 
 struct CoarseWorkerArgs {
@@ -137,11 +138,6 @@ void benchmark_hashmap() {
 
 
 void benchmark_coarse_hashmap() {
-
-    // RW 12 threads, 10M/20M: 6 put, 3.3 get
-    // RW 24 threads, 10M/20M: 4 put, 2.5 get
-    // Bucket 12 threads, 10M/20M: 6.4 put, 2.3 get
-    // Bucket 24 threads, 10M/20M: 4 put, 1.4 get
 
     std::cout << "\nBenchmarking coarse hashmap..." << std::endl;
 
@@ -370,6 +366,74 @@ void benchmark_atomic_operations() {
 }
 
 
+void benchmark_mod() {
+
+    std::cout << "\nBenchmarking mod..." << std::endl;
+
+    double start_time, end_time, best_time;
+
+    best_time = 1e30;
+    for (int i = 0; i < 3; i++) {
+        start_time = CycleTimer::currentSeconds();
+        for (int j = 0; j < NUM_OPS; j++) {
+            int x = 4234324 % -2351;
+        }
+        end_time = CycleTimer::currentSeconds();
+        best_time = std::min(best_time, end_time-start_time);
+    }
+    std::cout << "default mod time: " << best_time << std::endl;
+
+    best_time = 1e30;
+    for (int i = 0; i < 3; i++) {
+        start_time = CycleTimer::currentSeconds();
+        for (int j = 0; j < NUM_OPS; j++) {
+            int x = 4234324 % -2351;
+            x = abs(x);
+            x = NUM_BUCKETS - x;
+        }
+        end_time = CycleTimer::currentSeconds();
+        best_time = std::min(best_time, end_time-start_time);
+    }
+    std::cout << "nonnegative mod time: " << best_time << std::endl;
+
+}
+
+inline int fastrand() {
+  int g_seed = (214013*g_seed+2531011);
+  return (g_seed>>16)&0x7FFF;
+}
+
+void benchmark_random() {
+
+    std::cout << "\nBenchmarking rand..." << std::endl;
+
+    double start_time, end_time, best_rand_time, best_fast_rand_time;
+
+    best_rand_time = 1e30;
+    best_fast_rand_time = 1e30;
+    for (int i = 0; i < 3; i++) {
+        start_time = CycleTimer::currentSeconds();
+        for (int j = 0; j < NUM_OPS; j++) {
+            int x = rand();
+        }
+        end_time = CycleTimer::currentSeconds();
+        best_rand_time = std::min(best_rand_time, end_time-start_time);
+
+        start_time = CycleTimer::currentSeconds();
+        for (int j = 0; j < NUM_OPS; j++) {
+            int x = fastrand();
+        }
+        end_time = CycleTimer::currentSeconds();
+        best_fast_rand_time = std::min(best_fast_rand_time, end_time-start_time);
+
+    }
+
+    std::cout << "rand() time: " << best_rand_time << std::endl;
+    std::cout << "fast_rand() time: " << best_fast_rand_time << std::endl;
+
+}
+
+
 int main() {
 
     std::cout << "Starting benchmark with NUM_BUCKETS: " << NUM_BUCKETS
@@ -377,13 +441,39 @@ int main() {
 
     // benchmark_builtin_unorderedmap();
     // benchmark_hashmap();
-    // beashmap();
+    // benchmark_coarse_hashmap();
     // benchmark_cuckoo_hashmap();
-    // benchmark_better_cuckoo_hashmap();
-    benchmark_optimistic_cuckoo_hashmap();
+    benchmark_better_cuckoo_hashmap();
+    // benchmark_optimistic_cuckoo_hashmap();
 
     // benchmark_mutex_types();
     // benchmark_atomic_operations();
+    // benchmark_mod();
+    // benchmark_random();
+
+    // CircularQueue<int> queue(10);
+
+    // assert(queue.is_empty() == true);
+    // for (int i = 0; i < 10; i++) {
+    //     assert(queue.push(i) == true);
+    // }
+    // assert (queue.is_full() == true);
+    // for (int i = 0; i < 5; i++) {
+    //     assert(queue.push(i) == false);
+    // }
+    // for (int i = 0; i < 10; i++) {
+    //     int x;
+    //     assert(queue.pop(&x) == true);
+    //     assert(x == i);
+    // }
+    // assert(queue.is_empty() == true);
+    // for (int i = 0; i < 5; i++) {
+    //     int x;
+    //     assert(queue.pop(&x) == false);
+    // }
+    // for (int i = 0; i < 5; i++) {
+    //     assert(queue.push(i) == true);
+    // }
 
     return 0;
 }
