@@ -45,14 +45,11 @@
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
                     <li>
-                        <a href="#">Project Proposal</a>
+                        <a href="#proposal">Project Proposal</a>
                     </li>
-                    <!-- <li> -->
-                        <!-- <a href="#">Services</a> -->
-                    <!-- </li> -->
-                    <!-- <li> -->
-                        <!-- <a href="#">Contact</a> -->
-                    <!-- </li> -->
+                    <li>
+                        <a href="#checkpoint">Checkpoint</a>
+                    </li>
                 </ul>
             </div>
             <!-- /.navbar-collapse -->
@@ -63,7 +60,7 @@
     <br><br><br><br>
 
     <!-- Page Content -->
-    <div class="container">
+    <div class="container" id="proposal">
 
         <div class="row">
             <div class="col-lg-12">
@@ -77,7 +74,7 @@
         <div class="row">
             <div class="col-lg-8">
                 <h1>Project Proposal</h1>
-                
+
                 <hr>
 
                 <h2>Summary</h2>
@@ -100,7 +97,7 @@
                 <p>Our key-value store implementation will focus on maximizing concurrent performance and memory efficiency.</p>
 
                 <p><b>Concurrent Performance</b>: Memcached uses a single global lock both of its internal data structures (hash table and doubly linked list), which makes its implementation inherently sequential.</p>
-                
+
                 <p><b>Memory Efficiency</b>: Memcached's implementation uses three pointers for each entry in the key-value store, one for the chain in the hash table and two for the prev/next pointers in the doubly linked list. Since Memcached is designed for small chunks of data, using three pointers per entry is inefficient.</p>
 
                 <p><b>Challenge:</b> We will implement several algorithms for a concurrent, in-memory key-value store. Our final implementation will parallelize well to concurrent workloads and be more memory efficient by reducing the number of pointers required per entry. Concurrently accessing and modifying a shared data structure is inherently challenging and prone to concurrency issues such as deadlock and race condtions. Also, we expect to spend a significant amount of time researching and implementing advanced algorithms such as cuckoo hashing and optimistic cuckoo hashing.</p>
@@ -127,7 +124,7 @@
                     <li>Coarse grained parallel implementation using cuckoo hashing.</li>
                     <li>Fine grained parallel implementation using optimistic concurrent cuckoo hashing.</li>
                 </ol>
-                
+
                 <hr>
 
                 <h4>Hope to Achieve:</h4>
@@ -153,27 +150,27 @@
                 <table border="1" style="width:100%">
                   <tr>
                     <td><b>&nbsp;Week</b></td>
-                    <td><b>&nbsp;Goal</b></td> 
+                    <td><b>&nbsp;Goal</b></td>
                   </tr>
                   <tr>
                     <td>&nbsp;4/3 - 4/9</td>
-                    <td>&nbsp;Read literature; implement sequential key-value store</td> 
+                    <td>&nbsp;Read literature; implement sequential key-value store</td>
                   </tr>
                   <tr>
                     <td>&nbsp;4/10 - 4/16</td>
-                    <td>&nbsp;Implement coarse and fine grained key-value store</td> 
+                    <td>&nbsp;Implement coarse and fine grained key-value store</td>
                   </tr>
                   <tr>
                     <td>&nbsp;4/17 - 4/23</td>
-                    <td>&nbsp;Implement cuckoo hashing</td> 
+                    <td>&nbsp;Implement cuckoo hashing</td>
                   </tr>
                   <tr>
                     <td>&nbsp;4/24 - 4/30</td>
-                    <td>&nbsp;Begin optimistic cuckoo hashing implementation</td> 
+                    <td>&nbsp;Begin optimistic cuckoo hashing implementation</td>
                   </tr>
                   <tr>
                     <td>&nbsp;5/1 - 5/9</td>
-                    <td>&nbsp;Finish optimistic cuckoo hashing implementation</td> 
+                    <td>&nbsp;Finish optimistic cuckoo hashing implementation</td>
                   </tr>
                 </table>
 
@@ -190,6 +187,111 @@
     </div>
 
     <!-- /.container -->
+
+    <br>
+    <br>
+
+    <!-- Page Content -->
+    <div class="container" id="checkpoint">
+
+        <div class="row">
+            <div class="col-lg-8">
+                <h1>Project Checkpoint</h1>
+
+                <hr>
+
+                <h2>Updated Schedule</h2>
+
+                <table border="1" style="width:100%">
+                  <tr>
+                    <td><b>&nbsp;Days</b></td>
+                    <td><b>&nbsp;Goal</b></td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;4/20 - 4/23</td>
+                    <td>&nbsp;Improve cache locality of optimistic concurrent cuckoo hashmap. <br>&nbsp;Create better test suite for benchmarking.</td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;4/24 - 4/30</td>
+                    <td>&nbsp;Additional optimizations for our optimistic concurrent cuckoo hashmap implementation.</td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;5/1 - 5/9</td>
+                    <td>&nbsp;Parallel cuckoo hashmap using BFS to speed up insertion time.</td>
+                  </tr>
+                </table>
+
+                <hr>
+
+                <h2>Work Completed So Far</h2>
+                <p>We have implemented the following:</p>
+                <ol>
+                    <li>Serial hashmap using separate chaining.</li>
+                    <li>Parallel implementation of (1) using chain-level locks.</li>
+                    <li>Sequential hashmap using cuckoo hashing.</li>
+                    <li>Sequential hashmap using cuckoo hashing with cache optimizations.</li>
+                    <li>Optimistic concurrent cuckoo hashmap. This implementation uses key version counters incremented using atomic instructions rather than mutexes for more fine grained parllelism. It also uses a modified path discovery/eviction policy that reduces false misses and allows for lower concurrent read latency during write conflicts.</li>
+                </ol>
+
+                <hr>
+
+                <h2>Preliminary Results</h2>
+
+                <table border="1" style="width:100%">
+                  <tr>
+                    <td><b>&nbsp;Implementation</b></td>
+                    <td><b>&nbsp;20M Insert Time (Seconds)</b></td>
+                    <td><b>&nbsp;20M Read Time (Seconds) </b></td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;C++11 Unordered Map</td>
+                    <td>&nbsp;32.91</td>
+                    <td>&nbsp;12.95</td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;Sequential Cuckoo</td>
+                    <td>&nbsp;13.93</td>
+                    <td>&nbsp;10.37</td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;Parallel (Bucket-Level) Separate Chaining with 48 Threads</td>
+                    <td>&nbsp;3.50</td>
+                    <td>&nbsp;1.47</td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;Optimistic Concurrent Cuckoo with 48 Threads</td>
+                    <td>&nbsp;21.91</td>
+                    <td>&nbsp;1.22</td>
+                  </tr>
+                </table>
+
+                <br>
+                <p>We have included preliminary results of our hashmap implementations above, running our test suite on an Intel Xeon E5645 CPU. As expected, the parallel bucket-level hashmap is faster than sequential implementations. One perhaps surprising result is that our optimistic concurrent cuckoo hashmap insertion is even slower than the sequential cuckoo hashmap. This is because the optimistic concurrent cuckoo hashmap is optimized for a read-heavy workload. We sacrifice insertion throughput but improve read throughput by minimizing the chances of concurrent read-write conflicts.</p>
+
+                <p>We have managed to implement most of what we originally planned to achieve by the end of the semester. However, to be fair, we believe that for versions (4) and (5), there are some performance bugs or implementation details that we may be missing that is preventing us from achieving even greater speedup. Specifically, we have not been able to achieve speedup by adding tags in (4) to improve cache locality and reduce pointer dereferences.</p>
+
+                <hr>
+
+                <h2>Presentation Plan</h2>
+                <p>We will create a number of graphs to visualize our benchmarking results. These graphs will mostly show the performance of different key-value store implementations as we vary the percentage of read and write requests.</p>
+
+                <hr>
+
+                <h2>Current Issues</h2>
+                <ol>
+                    <li>It is difficult to debug optimizations when they pass our correctness tests but do not provide additional performance.</li>
+                    <li>We are having trouble finding easy-to-use and accurate tools to measure cache performance. We plan on looking into perf soon, but have not had a chance to do so yet.</li>
+                </ol>
+
+            </div>
+        </div>
+
+        <hr>
+
+    </div>
+
+    <!-- /.container -->
+
 
     <!-- jQuery -->
     <script src"js/jquery.js"></script>
