@@ -12,8 +12,8 @@ class Segment {
 
         Segment(int num_buckets);
         ~Segment();
-        T get(std::string key, int h1, int h2);
-        void put(std::string key, T val, int h1, int h2);
+        T get(std::string key, uint32_t h1, uint32_t h2);
+        void put(std::string key, T val, uint32_t h1, uint32_t h2);
 
     private:
         struct HashEntry {

@@ -10,10 +10,10 @@
 template <typename T>
 SegmentHashMap<T>::SegmentHashMap(int num_buckets, int concurrency) {
 
-    m_segments = new Segment<T>*[concurrency]{5};
-    // for (int i = 0; i < concurrency; i++) {
-    //     m_segments[i] = new Segment<T>(num_buckets / concurrency);
-    // }
+    m_segments = new Segment<T>*[concurrency];
+    for (int i = 0; i < concurrency; i++) {
+        m_segments[i] = new Segment<T>(num_buckets / concurrency);
+    }
     m_concurrency = concurrency;
     // m_table = new HashEntry*[num_buckets * SLOTS_PER_BUCKET]();
     // m_num_buckets = num_buckets;
@@ -78,7 +78,7 @@ Segment<T>::~Segment() {
 }
 
 template <typename T>
-T Segment<T>::get(std::string key, int h1, int h2) {
+T Segment<T>::get(std::string key, uint32_t h1, uint32_t h2) {
 
     h1 = h1 % m_num_buckets;
     h2 = h2 % m_num_buckets;
@@ -141,7 +141,7 @@ T Segment<T>::get(std::string key, int h1, int h2) {
 }
 
 template <typename T>
-void Segment<T>::put(std::string key, T val, int h1, int h2) {
+void Segment<T>::put(std::string key, T val, uint32_t h1, uint32_t h2) {
     m_write_mutex.lock();
 
     int num_iters = 0;

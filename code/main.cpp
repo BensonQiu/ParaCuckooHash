@@ -16,10 +16,10 @@
 
 #define NUM_THREADS 48
 #define NUM_BUCKETS 10 * 1000 * 1000
-#define NUM_OPS 20 * 1000 * 1000
+// #define NUM_OPS 20 * 1000 * 1000
 
 // #define NUM_BUCKETS 2 * 1000 * 1000
-// #define NUM_OPS 4 * 1000 * 1000
+#define NUM_OPS 20 * 1000 * 1000
 
 
 struct CoarseWorkerArgs {
@@ -352,21 +352,21 @@ void benchmark_segment_hashmap() {
 
         // PUT
         start_time = CycleTimer::currentSeconds();
-        // for (int j = 0; j < NUM_OPS; j++) {
-        //     std::string key = std::to_string(j);
-        //     my_map.put(key, "value" + key);
+        for (int j = 0; j < NUM_OPS; j++) {
+            std::string key = std::to_string(j);
+            my_map.put(key, "value" + key);
+        }
+        // for (int j = 0; j < NUM_THREADS; j++) {
+        //     args[j].my_map = &my_map;
+        //     args[j].thread_id = (long int)j;
+        //     args[j].member_function = "put";
         // }
-        for (int j = 0; j < NUM_THREADS; j++) {
-            args[j].my_map = &my_map;
-            args[j].thread_id = (long int)j;
-            args[j].member_function = "put";
-        }
-        for (int j = 0; j < NUM_THREADS; j++) {
-            pthread_create(&workers[j], NULL, segment_thread_send_requests, &args[j]);
-        }
-        for (int j = 0; j < NUM_THREADS; j++) {
-            pthread_join(workers[j], NULL);
-        }
+        // for (int j = 0; j < NUM_THREADS; j++) {
+        //     pthread_create(&workers[j], NULL, segment_thread_send_requests, &args[j]);
+        // }
+        // for (int j = 0; j < NUM_THREADS; j++) {
+        //     pthread_join(workers[j], NULL);
+        // }
         end_time = CycleTimer::currentSeconds();
         best_put_time = std::min(best_put_time, end_time-start_time);
 
@@ -387,8 +387,8 @@ void benchmark_segment_hashmap() {
         end_time = CycleTimer::currentSeconds();
         best_get_time = std::min(best_get_time, end_time-start_time);
 
-        // std::cout << best_put_time << std::endl;
-        // std::cout << best_get_time << std::endl << std::endl;
+        std::cout << best_put_time << std::endl;
+        std::cout << best_get_time << std::endl << std::endl;
     }
     std::cout << "Segment Cuckoo (" << NUM_THREADS << " threads): put: " << best_put_time << std::endl;
     std::cout << "Segment Cuckoo (" << NUM_THREADS << " threads): get: " << best_get_time << std::endl;
