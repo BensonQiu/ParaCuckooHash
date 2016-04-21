@@ -24,6 +24,7 @@ class OptimisticCuckooHashMap {
         HashEntry **m_table;
         int m_num_buckets;
         uint32_t* m_key_version_counters;
+        std::mutex m_write_mutex;
 
         inline int fastrand() const {
             int g_seed = (214013*g_seed+2531011);

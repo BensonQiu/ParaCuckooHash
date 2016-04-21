@@ -96,6 +96,7 @@ T OptimisticCuckooHashMap<T>::get(std::string key) {
 
 template <typename T>
 void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
+    m_write_mutex.lock();
 
     int num_iters = 0;
     std::string curr_key = key;
@@ -144,6 +145,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
                 __sync_fetch_and_add(&key_version_index, 1);
                 hash_entry->val = curr_val;
                 __sync_fetch_and_add(&key_version_index, 1);
+                m_write_mutex.unlock();
                 return;
             }
         }
@@ -156,12 +158,14 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
             if (hash_entry == NULL){
                 // Found an empty bucket slot for the current key.
                 path.push_back(i);
+
                 goto SwapPathKeys;
             } else if (hash_entry->key == curr_key) {
                 // If the key already exists, update the value and return immediately.
                 __sync_fetch_and_add(&key_version_index, 1);
                 hash_entry->val = curr_val;
                 __sync_fetch_and_add(&key_version_index, 1);
+                m_write_mutex.unlock();
                 return;
             }
         }
@@ -207,6 +211,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
 
     if (path.size() == MAX_ITERS) {
         std::cout << "Abort" << std::endl;
+        m_write_mutex.unlock();
         return;
     }
 
@@ -217,6 +222,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
         hash_entry->key = key;
         hash_entry->val = val;
         m_table[index] = hash_entry;
+        m_write_mutex.unlock();
         return;
     }
 
@@ -251,4 +257,5 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
             to_index = from_index;
         }
     }
+    m_write_mutex.unlock();
 }
