@@ -7,6 +7,7 @@
 #include "hash_map.h"
 #include "common/hash.h"
 #include "coarse_hash_map.h"
+#include "segment_hash_map.h"
 #include "cuckoo_hash_map.h"
 #include "better_cuckoo_hash_map.h"
 #include "optimistic_cuckoo_hash_map.h"
@@ -33,6 +34,12 @@ struct OptimisticWorkerArgs {
     std::string member_function;
 };
 
+struct SegmentWorkerArgs {
+    SegmentHashMap<std::string> *my_map;
+    int thread_id;
+    std::string member_function;
+};
+
 void *coarse_thread_send_requests(void *threadArgs) {
     CoarseWorkerArgs* args = static_cast<CoarseWorkerArgs*>(threadArgs);
     CoarseHashMap<std::string,std::string> *my_map = args->my_map;
@@ -53,6 +60,23 @@ void *coarse_thread_send_requests(void *threadArgs) {
 void *optimistic_thread_send_requests(void *threadArgs) {
     OptimisticWorkerArgs* args = static_cast<OptimisticWorkerArgs*>(threadArgs);
     OptimisticCuckooHashMap<std::string> *my_map = args->my_map;
+    int thread_ID = args->thread_id;
+    std::string member_function = args->member_function;
+
+    if (member_function.compare("put") == 0) {
+        for (int i = thread_ID; i < NUM_OPS; i += NUM_THREADS) {
+            my_map->put(std::to_string(i), "value" + std::to_string(i));
+        }
+    } else if (member_function.compare("get") == 0) {
+       for (int i = thread_ID; i < NUM_OPS; i += NUM_THREADS) {
+            my_map->get(std::to_string(i));
+        }
+    }
+}
+
+void *segment_thread_send_requests(void *threadArgs) {
+    SegmentWorkerArgs* args = static_cast<SegmentWorkerArgs*>(threadArgs);
+    SegmentHashMap<std::string> *my_map = args->my_map;
     int thread_ID = args->thread_id;
     std::string member_function = args->member_function;
 
@@ -312,6 +336,66 @@ void benchmark_optimistic_cuckoo_hashmap() {
 }
 
 
+void benchmark_segment_hashmap() {
+
+    std::cout << "\nBenchmarking segment hashmap..." << std::endl;
+
+    double start_time, end_time, best_put_time, best_get_time;
+
+    best_put_time = 1e30;
+    best_get_time = 1e30;
+    for (int i = 0; i < 3; i++) {
+        SegmentHashMap<std::string> my_map(20*NUM_BUCKETS, 32);
+
+        pthread_t workers[NUM_THREADS];
+        SegmentWorkerArgs args[NUM_THREADS];
+
+        // PUT
+        start_time = CycleTimer::currentSeconds();
+        // for (int j = 0; j < NUM_OPS; j++) {
+        //     std::string key = std::to_string(j);
+        //     my_map.put(key, "value" + key);
+        // }
+        for (int j = 0; j < NUM_THREADS; j++) {
+            args[j].my_map = &my_map;
+            args[j].thread_id = (long int)j;
+            args[j].member_function = "put";
+        }
+        for (int j = 0; j < NUM_THREADS; j++) {
+            pthread_create(&workers[j], NULL, segment_thread_send_requests, &args[j]);
+        }
+        for (int j = 0; j < NUM_THREADS; j++) {
+            pthread_join(workers[j], NULL);
+        }
+        end_time = CycleTimer::currentSeconds();
+        best_put_time = std::min(best_put_time, end_time-start_time);
+
+
+        // GET
+        start_time = CycleTimer::currentSeconds();
+        for (int j = 0; j < NUM_THREADS; j++) {
+            args[j].my_map = &my_map;
+            args[j].thread_id = (long int)j;
+            args[j].member_function = "get";
+        }
+        for (int j = 0; j < NUM_THREADS; j++) {
+            pthread_create(&workers[j], NULL, segment_thread_send_requests, &args[j]);
+        }
+        for (int j = 0; j < NUM_THREADS; j++) {
+            pthread_join(workers[j], NULL);
+        }
+        end_time = CycleTimer::currentSeconds();
+        best_get_time = std::min(best_get_time, end_time-start_time);
+
+        // std::cout << best_put_time << std::endl;
+        // std::cout << best_get_time << std::endl << std::endl;
+    }
+    std::cout << "Segment Cuckoo (" << NUM_THREADS << " threads): put: " << best_put_time << std::endl;
+    std::cout << "Segment Cuckoo (" << NUM_THREADS << " threads): get: " << best_get_time << std::endl;
+}
+
+
+/*
 void benchmark_mutex_types() {
 
     std::cout << "\nBenchmarking mutexes..." << std::endl;
@@ -344,7 +428,7 @@ void benchmark_mutex_types() {
     }
     std::cout << "Reg mutex time: " << best_time << std::endl;
 }
-
+*/
 
 void benchmark_atomic_operations() {
 
@@ -443,37 +527,16 @@ int main() {
     // benchmark_hashmap();
     // benchmark_coarse_hashmap();
     // benchmark_cuckoo_hashmap();
-    benchmark_better_cuckoo_hashmap();
+    // benchmark_better_cuckoo_hashmap();
     // benchmark_optimistic_cuckoo_hashmap();
+    benchmark_segment_hashmap();
 
     // benchmark_mutex_types();
     // benchmark_atomic_operations();
     // benchmark_mod();
     // benchmark_random();
 
-    // CircularQueue<int> queue(10);
-
-    // assert(queue.is_empty() == true);
-    // for (int i = 0; i < 10; i++) {
-    //     assert(queue.push(i) == true);
-    // }
-    // assert (queue.is_full() == true);
-    // for (int i = 0; i < 5; i++) {
-    //     assert(queue.push(i) == false);
-    // }
-    // for (int i = 0; i < 10; i++) {
-    //     int x;
-    //     assert(queue.pop(&x) == true);
-    //     assert(x == i);
-    // }
-    // assert(queue.is_empty() == true);
-    // for (int i = 0; i < 5; i++) {
-    //     int x;
-    //     assert(queue.pop(&x) == false);
-    // }
-    // for (int i = 0; i < 5; i++) {
-    //     assert(queue.push(i) == true);
-    // }
+    SegmentHashMap<std::string> my_map();
 
     return 0;
 }
