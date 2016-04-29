@@ -51,7 +51,7 @@ T OptimisticCuckooHashMap<T>::get(std::string key) {
     int key_version_index = h1 % NUM_KEY_VERSION_COUNTERS;
 
     Try:
-    uint32_t key_version_start = __sync_fetch_and_add(&key_version_index, 0);
+    uint32_t key_version_start = __sync_fetch_and_add(&m_key_version_counters[key_version_index], 0);
 
     // Look at the first bucket.
     for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
@@ -59,9 +59,8 @@ T OptimisticCuckooHashMap<T>::get(std::string key) {
         if (hash_entry != NULL) {
             if (key == hash_entry->key) {
                 T val = hash_entry->val;
-                uint32_t key_version_end = __sync_add_and_fetch(&key_version_index, 0);
+                uint32_t key_version_end = __sync_add_and_fetch(&m_key_version_counters[key_version_index], 0);
                 if (key_version_start & 0x1 || key_version_start != key_version_end) {
-                    std::cout << "Had to retry with key: " << key << std::endl;
                     goto Try;
                 }
                 return val;
@@ -75,9 +74,8 @@ T OptimisticCuckooHashMap<T>::get(std::string key) {
         if (hash_entry != NULL) {
             if (key == hash_entry->key) {
                 T val = hash_entry->val;
-                uint32_t key_version_end = __sync_add_and_fetch(&key_version_index, 0);
+                uint32_t key_version_end = __sync_add_and_fetch(&m_key_version_counters[key_version_index], 0);
                 if (key_version_start & 0x1 || key_version_start != key_version_end) {
-                    std::cout << "Had to retry with key: " << key << std::endl;
                     goto Try;
                 }
                 return val;
@@ -85,12 +83,11 @@ T OptimisticCuckooHashMap<T>::get(std::string key) {
         }
     }
 
-    uint32_t key_version_end = __sync_add_and_fetch(&key_version_index, 0);
+    uint32_t key_version_end = __sync_add_and_fetch(&m_key_version_counters[key_version_index], 0);
     if (key_version_start & 0x1 || key_version_start != key_version_end) {
-        std::cout << "Had to retry with key: " << key << std::endl;
         goto Try;
     }
-    std::cout << "Key was never found!!" << key << std::endl ;
+
     throw KeyNotFoundError(key.c_str());
 }
 
@@ -126,10 +123,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
     std::vector<int> key_version_array;
 
     // Find the path of elements to be evicted for key insertion.
-    while (num_iters < MAX_ITERS) {
-        num_iters++;
-
-        //std::cout << "Looking at key: " << curr_key << " with value: " << curr_val << std::endl;
+    while (num_iters++ < MAX_ITERS) {
 
         // Look at the first bucket.
         for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
@@ -140,11 +134,16 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
                 // Found an empty bucket slot for the current key.
                 path.push_back(i);
                 goto SwapPathKeys;
-            } else if (hash_entry->key == curr_key) {
-                // If the key already exists, update the value and return immediately.
-                __sync_fetch_and_add(&key_version_index, 1);
+            } else if (num_iters == 1 && hash_entry->key == curr_key) {
+                // If the key already exists on the first iteration,
+                // update the value and return immediately.
+                // For the case where num_iters > 1, we are searching for an
+                // eviction path but haven't evicted any elements yet,
+                // so we should always expect to find key we are evicting,
+                // but should not return from the function.
+                __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
                 hash_entry->val = curr_val;
-                __sync_fetch_and_add(&key_version_index, 1);
+                __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
                 m_write_mutex.unlock();
                 return;
             }
@@ -158,13 +157,17 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
             if (hash_entry == NULL){
                 // Found an empty bucket slot for the current key.
                 path.push_back(i);
-
                 goto SwapPathKeys;
-            } else if (hash_entry->key == curr_key) {
-                // If the key already exists, update the value and return immediately.
-                __sync_fetch_and_add(&key_version_index, 1);
+            } else if (num_iters == 1 && hash_entry->key == curr_key) {
+                // If the key already exists on the first iteration,
+                // update the value and return immediately.
+                // For the case where num_iters > 1, we are searching for an
+                // eviction path but haven't evicted any elements yet,
+                // so we should always expect to find key we are evicting,
+                // but should not return from the function.
+                __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
                 hash_entry->val = curr_val;
-                __sync_fetch_and_add(&key_version_index, 1);
+                __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
                 m_write_mutex.unlock();
                 return;
             }
@@ -172,12 +175,15 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
 
         // If the key can't be placed in either bucket,
         // randomly choose an existing key to evict.
-        int index = fastrand() % (2 * SLOTS_PER_BUCKET);
+        int index = rand() % (2 * SLOTS_PER_BUCKET);
         HashEntry* temp_hash_entry;
-        if (0 <= index && index < SLOTS_PER_BUCKET)
+        if (0 <= index && index < SLOTS_PER_BUCKET) {
             path.push_back(h1 + index);
-        else
+            temp_hash_entry = m_table[h1 + index];
+        } else {
             path.push_back(h2 + index - SLOTS_PER_BUCKET);
+            temp_hash_entry = m_table[h2 + index - SLOTS_PER_BUCKET];
+        }
 
         std::string temp_key = temp_hash_entry->key;
         T temp_val = temp_hash_entry->val;
@@ -207,8 +213,6 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
 
  SwapPathKeys:
 
-    //std::cout << "Path found: " << path.size() << std::endl;
-
     if (path.size() == MAX_ITERS) {
         std::cout << "Abort" << std::endl;
         m_write_mutex.unlock();
@@ -227,11 +231,10 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
     }
 
     // Case 2: Evictions needed to insert key.
-
     std::vector<int>::reverse_iterator key_version_iterator = key_version_array.rbegin();
     std::vector<int>::reverse_iterator path_iterator = path.rbegin();
 
-    int first_index = path.front();
+    // int first_index = path.front();
     int to_index = *path_iterator++;
 
     for (; path_iterator != path.rend(); path_iterator++) {
@@ -239,23 +242,22 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
         int from_index = *path_iterator;
         int key_version_index = *key_version_iterator++;
 
-        // If we are looking at the first index in the path,
-        // swap with the actual key we are trying to insert.
-        if (to_index == first_index) {
-            HashEntry* hash_entry = new HashEntry();
-            hash_entry->key = key;
-            hash_entry->val = val;
-            m_table[to_index] = hash_entry;
-        } else {
-            __sync_fetch_and_add(&key_version_index, 1);
-            HashEntry* from_hash_entry = m_table[from_index];
-            HashEntry* to_hash_entry = new HashEntry();
-            to_hash_entry->key = from_hash_entry->key;
-            to_hash_entry->val = from_hash_entry->val;
-            __sync_fetch_and_add(&key_version_index, 1);
+        __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
+        HashEntry* from_hash_entry = m_table[from_index];
+        HashEntry* to_hash_entry = new HashEntry();
+        to_hash_entry->key = from_hash_entry->key;
+        to_hash_entry->val = from_hash_entry->val;
+        m_table[to_index] = to_hash_entry;
+        __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
 
-            to_index = from_index;
-        }
+        to_index = from_index;
     }
+
+    int first_index = path.front();
+    __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
+    m_table[first_index]->key = key;
+    m_table[first_index]->val = val;
+    __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
+
     m_write_mutex.unlock();
 }
