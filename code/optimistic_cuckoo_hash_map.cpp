@@ -188,6 +188,8 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
         std::string temp_key = temp_hash_entry->key;
         T temp_val = temp_hash_entry->val;
 
+        h1 = 0;
+        h2 = 0;
         hashlittle2(temp_key.c_str(), temp_key.length(), &h1, &h2);
 
         h1 = h1 % m_num_buckets;
