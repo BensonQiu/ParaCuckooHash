@@ -236,7 +236,6 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
     std::vector<int>::reverse_iterator key_version_iterator = key_version_array.rbegin();
     std::vector<int>::reverse_iterator path_iterator = path.rbegin();
 
-    // int first_index = path.front();
     int to_index = *path_iterator++;
 
     for (; path_iterator != path.rend(); path_iterator++) {

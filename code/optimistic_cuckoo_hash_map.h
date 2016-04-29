@@ -26,10 +26,6 @@ class OptimisticCuckooHashMap {
         uint32_t* m_key_version_counters;
         std::mutex m_write_mutex;
 
-        inline int fastrand() const {
-            int g_seed = (214013*g_seed+2531011);
-            return (g_seed>>16)&0x7FFF;
-        }
 };
 
 #include "optimistic_cuckoo_hash_map.cpp"
