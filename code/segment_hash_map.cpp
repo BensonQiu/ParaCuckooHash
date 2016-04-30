@@ -15,15 +15,7 @@ SegmentHashMap<T>::SegmentHashMap(int num_buckets, int concurrency) {
         m_segments[i] = new Segment<T>(num_buckets / concurrency);
     }
     m_concurrency = concurrency;
-    // m_table = new HashEntry*[num_buckets * SLOTS_PER_BUCKET]();
-    // m_num_buckets = num_buckets;
-    // m_key_version_counters = new uint32_t[NUM_KEY_VERSION_COUNTERS]();
 };
-
-    // for (int i = 0; i < m_num_buckets * SLOTS_PER_BUCKET; i++)
-    //     delete m_table[i];
-    // delete[] m_table;
-    // delete[] m_key_version_counters;
 
 template <typename T>
 SegmentHashMap<T>::~SegmentHashMap() {

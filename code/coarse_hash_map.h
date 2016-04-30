@@ -4,13 +4,9 @@
 #include <atomic>
 #include <iostream>
 #include <mutex>
-#include <boost/thread/locks.hpp>
-#include <boost/thread/shared_mutex.hpp>
 
 template <typename T, typename U>
 class CoarseHashMap {
-
-	boost::shared_mutex* m_foo;
 
 	public:
 		CoarseHashMap(int table_size=64, float max_load_factor=1.5f);
@@ -39,8 +35,6 @@ class CoarseHashMap {
 		float m_max_load_factor; // Threshold for resizing table.
 		HashEntry **m_table;
 		std::mutex *m_bucket_mutexes; // Coarse grained mutex on each bucket.
-		// boost::shared_mutex *m_bucket_mutexes;
-		// boost::shared_mutex *m_foo;
 
 };
 

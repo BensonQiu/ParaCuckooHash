@@ -1,8 +1,6 @@
 #include <atomic>
 #include <iostream>
 #include <mutex>
-#include <boost/thread/locks.hpp>
-#include <boost/thread/shared_mutex.hpp>
 
 #include "common/CycleTimer.h"
 #include "common/errors.h"
@@ -16,7 +14,6 @@ CoarseHashMap<T,U>::CoarseHashMap(int table_size, float max_load_factor) {
 			m_max_load_factor = max_load_factor;
 			m_table = new HashEntry*[table_size];
 			m_bucket_mutexes = new std::mutex[table_size];
-			m_foo = new boost::shared_mutex[table_size];
 
 			for (int i = 0; i < table_size; i++)
 				m_table[i] = NULL;
@@ -35,15 +32,8 @@ CoarseHashMap<T,U>::~CoarseHashMap() {
 		}
 	}
 	delete[] m_bucket_mutexes;
-	delete[] m_foo;
 	delete[] m_table;
 }
-
-// template <typename T, typename U>
-// CoarseHashMap(const CoarseHashMap&) =delete;
-
-// template <typename T, typename U>
-// CoarseHashMap& operator=(const CoarseHashMap&) =delete;
 
 template <typename T, typename U>
 U CoarseHashMap<T,U>::get(T key) {
@@ -51,22 +41,20 @@ U CoarseHashMap<T,U>::get(T key) {
 	std::hash<T> hasher;
 	int bucket = hasher(key) % m_table_size;
 
-	// m_bucket_mutexes[bucket].lock();
-
-	boost::shared_lock<boost::shared_mutex> lock(m_foo[bucket]);
+	m_bucket_mutexes[bucket].lock();
 
 	HashEntry *prev = NULL;
 	HashEntry *curr = m_table[bucket];
 
 	while (curr != NULL) {
 		if (curr->key == key) {
-			// m_bucket_mutexes[bucket].unlock();
+			m_bucket_mutexes[bucket].unlock();
 			return curr->val;
 		}
 		curr = curr->next;
 	}
 
-	// m_bucket_mutexes[bucket].unlock();
+	m_bucket_mutexes[bucket].unlock();
 	throw KeyNotFoundError(key.c_str());
 }
 
@@ -86,9 +74,7 @@ void CoarseHashMap<T,U>::put(T key, U val) {
 	std::hash<T> hasher;
 	int bucket = hasher(key) % m_table_size;
 
-	// m_bucket_mutexes[bucket].lock();
-
-	boost::unique_lock<boost::shared_mutex> lock(m_foo[bucket]);
+	m_bucket_mutexes[bucket].lock();
 
 	HashEntry *prev = NULL;
 	HashEntry *curr = m_table[bucket];
@@ -98,7 +84,7 @@ void CoarseHashMap<T,U>::put(T key, U val) {
 	while (curr != NULL) {
 		if (curr->key == key) {
 			curr->val = val;
-			// m_bucket_mutexes[bucket].unlock();
+			m_bucket_mutexes[bucket].unlock();
 			return;
 		}
 		prev = curr;
@@ -118,7 +104,7 @@ void CoarseHashMap<T,U>::put(T key, U val) {
 		prev->next = temp;
 	}
 
-	// m_bucket_mutexes[bucket].unlock();
+	m_bucket_mutexes[bucket].unlock();
 
 }
 
