@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "common/hash.h"
+#include "common/murmurhash3.h"
 #include "common/errors.h"
 #include <vector>
 #include <iterator>
@@ -235,6 +236,9 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
     // Case 2: Evictions needed to insert key.
     std::vector<int>::reverse_iterator key_version_iterator = key_version_array.rbegin();
     std::vector<int>::reverse_iterator path_iterator = path.rbegin();
+
+    //std::cout << "Path Eviction size " << path.size() << std::endl;
+
 
     int to_index = *path_iterator++;
 

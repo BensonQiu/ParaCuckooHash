@@ -1,0 +1,77 @@
+Unix machine 6:
+
+
+Cache Comparisons
+
+Starting benchmark with NUM_BUCKETS: 10000000 and NUM_OPS: 20000000
+
+Benchmarking better cuckoo hashmap...
+BetterCuckoo put: 13.3324
+BetterCuckoo get: 8.81849
+
+ Performance counter stats for './benchmark':
+
+     3,007,040,817      cache-references
+     1,905,541,744      cache-misses              #   63.369 % of all cache refs
+   387,898,254,435      cycles
+   339,969,543,324      instructions              #    0.88  insns per cycle
+    68,656,241,716      branches
+         7,616,821      faults
+                37      migrations
+
+     130.102841565 seconds time elapsed
+
+
+Starting benchmark with NUM_BUCKETS: 10000000 and NUM_OPS: 20000000
+
+Benchmarking cuckoo hashmap...
+Cuckoo put: 10.5626
+Cuckoo get: 8.38693
+
+ Performance counter stats for './benchmark':
+
+     1,858,666,699      cache-references
+     1,265,219,068      cache-misses              #   68.071 % of all cache refs
+   353,893,053,464      cycles
+   329,378,914,964      instructions              #    0.93  insns per cycle
+    66,982,772,829      branches
+         3,798,955      faults
+                 0      migrations
+
+     103.867742225 seconds time elapsed
+
+Starting benchmark with NUM_BUCKETS: 10000000 and NUM_OPS: 20000000
+
+Benchmarking optimistic cuckoo hashmap...
+Optimistic Cuckoo (48 threads): put: 17.0524
+Optimistic Cuckoo (48 threads): get: 0.671958
+
+ Performance counter stats for './benchmark':
+
+     2,351,823,111      cache-references
+     1,405,665,514      cache-misses              #   59.769 % of all cache refs
+ 1,159,976,446,711      cycles
+   463,895,905,635      instructions              #    0.40  insns per cycle
+    97,582,497,776      branches
+        12,148,856      faults
+             1,187      migrations
+
+     119.678500584 seconds time elapsed
+
+Starting benchmark with NUM_BUCKETS: 10000000 and NUM_OPS: 20000000
+
+Benchmarking optimistic cuckoo hashmap...
+Optimistic Cuckoo (48 threads): put: 17.3159
+Optimistic Cuckoo (48 threads): get: 0.743846
+
+ Performance counter stats for './benchmark':
+
+     3,084,553,655      cache-references
+     1,615,563,413      cache-misses              #   52.376 % of all cache refs
+ 2,106,994,851,214      cycles
+   572,992,152,958      instructions              #    0.27  insns per cycle
+   131,071,848,210      branches
+        27,852,442      faults
+             3,227      migrations
+
+     130.919657805 seconds time elapsed

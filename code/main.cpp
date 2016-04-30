@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+
+#include "common/murmurhash3.h"
+
 #include "hash_map.h"
 #include "common/hash.h"
 #include "coarse_hash_map.h"
@@ -296,7 +299,7 @@ void benchmark_optimistic_cuckoo_hashmap() {
     best_put_time = 1e30;
     best_get_time = 1e30;
     for (int i = 0; i < 3; i++) {
-        OptimisticCuckooHashMap<std::string> my_map(20*NUM_BUCKETS);
+        OptimisticCuckooHashMap<std::string> my_map(1*NUM_BUCKETS);
 
         // PUT
         start_time = CycleTimer::currentSeconds();
@@ -430,6 +433,50 @@ void benchmark_mutex_types() {
 }
 */
 
+void benchmark_hash_functions(){
+
+  std::cout << "\nBenchmarking hash functions..." << std::endl;
+
+  double start_time, end_time, best_time;
+
+  std::string* keys = new std::string[NUM_OPS];
+
+
+  for (int i = 0 ; i < NUM_OPS ; i++){
+      std::string key = std::to_string(i);
+      keys[i] = key;
+  }
+
+
+
+  best_time = 1e30;
+  for (int i = 0; i < 3; i++) {
+    start_time = CycleTimer::currentSeconds();
+    int x = 0;
+    for (int j = 0; j < NUM_OPS; j++) {
+      uint32_t h1, h2;
+      h1 = 0;
+      h2 = 0;
+
+      std::string key = keys[j];
+
+
+
+      hashlittle2(key.c_str(), key.length(), &h1, &h2);
+
+      //uint32_t h3 = hashlittle(key.c_str(), key.length(),0);
+
+      //std::cout << "Key: " << key << " h1: " << h1 << " h2: " << h2 << "h3: " << h3 << std::endl;
+
+    }
+    end_time = CycleTimer::currentSeconds();
+    best_time = std::min(best_time, end_time-start_time);
+  }
+  std::cout << "hash function time: " << best_time << std::endl;
+
+
+}
+
 void benchmark_atomic_operations() {
 
     std::cout << "\nBenchmarking atomic operations..." << std::endl;
@@ -528,15 +575,15 @@ int main() {
     // benchmark_coarse_hashmap();
     // benchmark_cuckoo_hashmap();
     // benchmark_better_cuckoo_hashmap();
-    // benchmark_optimistic_cuckoo_hashmap();
-    benchmark_segment_hashmap();
+    //benchmark_optimistic_cuckoo_hashmap();
+    //benchmark_segment_hashmap();
+
+    benchmark_hash_functions();
 
     // benchmark_mutex_types();
     // benchmark_atomic_operations();
     // benchmark_mod();
     // benchmark_random();
-
-    SegmentHashMap<std::string> my_map();
 
     return 0;
 }
