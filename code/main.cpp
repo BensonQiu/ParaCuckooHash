@@ -4,12 +4,6 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-<<<<<<< HEAD
-=======
-
-
-
->>>>>>> d90d3bdd2475f89de30c52f44eee97ca971c7828
 #include "hash_map.h"
 #include "common/hash.h"
 #include "coarse_hash_map.h"
@@ -20,20 +14,15 @@
 #include "circular_queue.h"
 #include "common/CycleTimer.h"
 
-<<<<<<< HEAD
-#define NUM_THREADS 24
-#define NUM_READERS 24
-=======
 #define NUM_THREADS 48
-#define NUM_READERS 10
->>>>>>> d90d3bdd2475f89de30c52f44eee97ca971c7828
+#define NUM_READERS 48
 #define NUM_WRITERS 2
 
-#define NUM_BUCKETS 3 * 1000 * 1000
-#define NUM_OPS 6 * 1000 * 1000
+// #define NUM_BUCKETS 3 * 1000 * 1000
+// #define NUM_OPS 6 * 1000 * 1000
 
-//#define NUM_BUCKETS 2 * 1000 * 1000
-//#define NUM_OPS 4 * 1000 * 1000
+#define NUM_BUCKETS 2 * 1000 * 1000
+#define NUM_OPS 4 * 1000 * 1000
 
 // #define NUM_BUCKETS 500
 // #define NUM_OPS 1000
@@ -75,6 +64,7 @@ void *coarse_thread_send_requests(void *threadArgs) {
             my_map->get(keys[i]);
         }
     }
+    return NULL;
 }
 
 void *optimistic_thread_send_requests(void *threadArgs) {
@@ -93,6 +83,7 @@ void *optimistic_thread_send_requests(void *threadArgs) {
             my_map->get(keys[i]);
         }
     }
+    return NULL;
 }
 
 void *segment_thread_send_requests(void *threadArgs) {
@@ -111,6 +102,7 @@ void *segment_thread_send_requests(void *threadArgs) {
             my_map->get(keys[i]);
         }
     }
+    return NULL;
 }
 
 

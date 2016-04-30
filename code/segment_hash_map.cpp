@@ -78,14 +78,6 @@ T Segment<T>::get(std::string key, uint32_t h1, uint32_t h2) {
     h1 = h1 % m_num_buckets;
     h2 = h2 % m_num_buckets;
 
-    if (h1 < 0){
-      h1 = m_num_buckets - abs(h1);
-    }
-
-    if (h2 < 0){
-        h2 = m_num_buckets - abs(h2);
-    }
-
     h1 *= SLOTS_PER_BUCKET;
     h2 *= SLOTS_PER_BUCKET;
 
@@ -141,12 +133,6 @@ void Segment<T>::put(std::string key, T val, uint32_t h1, uint32_t h2) {
 
     h1 = h1 % m_num_buckets;
     h2 = h2 % m_num_buckets;
-
-    if (h1 < 0)
-        h1 = m_num_buckets - abs(h1);
-
-    if (h2 < 0)
-        h2 = m_num_buckets - abs(h2);
 
     h1 *= SLOTS_PER_BUCKET;
     h2 *= SLOTS_PER_BUCKET;
@@ -220,12 +206,6 @@ void Segment<T>::put(std::string key, T val, uint32_t h1, uint32_t h2) {
 
         h1 = h1 % m_num_buckets;
         h2 = h2 % m_num_buckets;
-
-        if (h1 < 0)
-            h1 = m_num_buckets - abs(h1);
-
-        if (h2 < 0)
-            h2 = m_num_buckets - abs(h2);
 
         h1 *= SLOTS_PER_BUCKET;
         h2 *= SLOTS_PER_BUCKET;

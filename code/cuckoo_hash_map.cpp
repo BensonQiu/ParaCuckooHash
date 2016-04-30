@@ -29,9 +29,6 @@ T CuckooHashMap<T>::get(std::string key) {
     hashlittle2(key.c_str(), key.length(), &h1, &h2);
 
     h1 = h1 % m_num_buckets;
-    if (h1 < 0){
-      h1 = m_num_buckets - abs(h1);
-    }
     h1 *= SLOTS_PER_BUCKET;
 
     // Look at the first bucket.
@@ -44,10 +41,6 @@ T CuckooHashMap<T>::get(std::string key) {
     }
 
     h2 = h2 % m_num_buckets;
-
-    if (h2 < 0){
-        h2 = m_num_buckets - abs(h2);
-    }
 
     h2 *= SLOTS_PER_BUCKET;
 
@@ -78,12 +71,6 @@ void CuckooHashMap<T>::put(std::string key, T val) {
 
         h1 = h1 % m_num_buckets;
         h2 = h2 % m_num_buckets;
-
-        if (h1 < 0)
-            h1 = m_num_buckets - abs(h1);
-
-        if (h2 < 0)
-            h2 = m_num_buckets - abs(h2);
 
         h1 *= SLOTS_PER_BUCKET;
         h2 *= SLOTS_PER_BUCKET;
