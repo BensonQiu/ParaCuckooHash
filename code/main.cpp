@@ -18,11 +18,11 @@
 #define NUM_READERS 48
 #define NUM_WRITERS 2
 
-// #define NUM_BUCKETS 3 * 1000 * 1000
-// #define NUM_OPS 6 * 1000 * 1000
+#define NUM_BUCKETS 10 * 1000 * 1000
+#define NUM_OPS 20 * 1000 * 1000
 
-#define NUM_BUCKETS 2 * 1000 * 1000
-#define NUM_OPS 4 * 1000 * 1000
+// #define NUM_BUCKETS 1000 * 1000
+// #define NUM_OPS 2 * 1000 * 1000
 
 // #define NUM_BUCKETS 500
 // #define NUM_OPS 1000
@@ -316,10 +316,6 @@ void benchmark_better_cuckoo_hashmap() {
 
 void benchmark_optimistic_cuckoo_hashmap() {
 
-    std::string* keys = new std::string[NUM_OPS];
-    for (int i = 0 ; i < NUM_OPS; i++)
-        keys[i] = std::to_string(i);
-
     std::cout << "\nBenchmarking optimistic cuckoo hashmap..." << std::endl;
 
     double start_time, end_time, best_put_time, best_get_time;
@@ -328,11 +324,16 @@ void benchmark_optimistic_cuckoo_hashmap() {
     best_put_time = 1e30;
     best_get_time = 1e30;
     for (int i = 0; i < 3; i++) {
-        OptimisticCuckooHashMap<std::string> my_map(6*NUM_BUCKETS);
+        OptimisticCuckooHashMap<std::string> my_map(0.55*NUM_BUCKETS);
+
+        std::string* keys = new std::string[NUM_OPS];
+        for (int i = 0 ; i < NUM_OPS; i++)
+            keys[i] = std::to_string(i);
 
         // PUT
         start_time = CycleTimer::currentSeconds();
         for (int j = 0; j < NUM_OPS; j++) {
+            // my_map.put(std::to_string(j), "value" + std::to_string(j));
             my_map.put(keys[j], "value" + keys[j]);
         }
         end_time = CycleTimer::currentSeconds();
@@ -340,6 +341,11 @@ void benchmark_optimistic_cuckoo_hashmap() {
 
         // GET
         start_time = CycleTimer::currentSeconds();
+
+        // for (int j = 0; j < NUM_OPS; j++) {
+        //     my_map.get(std::to_string(j));
+        //     // my_map.get(keys[j]);
+        // }
 
         pthread_t workers[NUM_THREADS];
         OptimisticWorkerArgs args[NUM_THREADS];
@@ -356,11 +362,13 @@ void benchmark_optimistic_cuckoo_hashmap() {
         for (int j = 0; j < NUM_THREADS; j++) {
             pthread_join(workers[j], NULL);
         }
+
         end_time = CycleTimer::currentSeconds();
         best_get_time = std::min(best_get_time, end_time-start_time);
 
         std::cout << best_put_time << std::endl;
         std::cout << best_get_time << std::endl;
+
     }
     std::cout << "Optimistic Cuckoo (" << NUM_THREADS << " threads): put: " << best_put_time << std::endl;
     std::cout << "Optimistic Cuckoo (" << NUM_THREADS << " threads): get: " << best_get_time << std::endl;
@@ -622,14 +630,14 @@ int main() {
     std::cout << "Starting benchmark with NUM_BUCKETS: " << NUM_BUCKETS
               << " and NUM_OPS: " << NUM_OPS << std::endl;
 
-    benchmark_builtin_unorderedmap();
-    benchmark_hashmap();
-    benchmark_coarse_hashmap();
-    benchmark_cuckoo_hashmap();
-    benchmark_better_cuckoo_hashmap();
+    // benchmark_builtin_unorderedmap();
+    // benchmark_hashmap();
+    // benchmark_coarse_hashmap();
+    // benchmark_cuckoo_hashmap();
+    // benchmark_better_cuckoo_hashmap();
     benchmark_optimistic_cuckoo_hashmap();
 
-    benchmark_segment_hashmap();
+    // benchmark_segment_hashmap();
 
     // benchmark_hash_functions();
 
