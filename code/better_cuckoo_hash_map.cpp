@@ -24,11 +24,19 @@ T BetterCuckooHashMap<T>::get(std::string key) {
     // Hash to two buckets.
     uint32_t h1, h2;
 
-    // h1 = hashlittle(key.c_str(), key.length(), 0);
-    std::hash<std::string> hasher;
-    h1 = hasher(key);
+    h1 = 0;
+    h2 = 0;
+
+    hashlittle2(key.c_str(), key.length(), &h1, &h2);
+
+
+    //h1 = hashlittle(key.c_str(), key.length(), 0);
+    //std::hash<std::string> hasher;
+    //h1 = hasher(key);
+
     unsigned char tag = tag_hash(h1);
-    h2 = h1 ^ (tag * 0x5bd1e995);
+
+    //h2 = h1 ^ (tag * 0x5bd1e995);
 
     h1 = h1 % m_num_buckets;
     h2 = h2 % m_num_buckets;
@@ -74,13 +82,17 @@ void BetterCuckooHashMap<T>::put(std::string key, T val) {
     while (num_iters < MAX_ITERS) {
         num_iters++;
         uint32_t h1, h2;
+	h1 = 0;
+	h2 = 0;
 
-        // h1 = hashlittle(key.c_str(), key.length(), 0);
-        std::hash<std::string> hasher;
-        h1 = hasher(key);
+	hashlittle2(curr_key.c_str(), curr_key.length(), &h1, &h2);
+
+        //h1 = hashlittle(key.c_str(), key.length(), 0);
+        //std::hash<std::string> hasher;
+        //h1 = hasher(key);
 
         unsigned char tag = tag_hash(h1);
-        h2 = h1 ^ (tag * 0x5bd1e995);
+        //h2 = h1 ^ (tag * 0x5bd1e995);
 
         h1 = h1 % m_num_buckets;
         h2 = h2 % m_num_buckets;
@@ -136,7 +148,7 @@ void BetterCuckooHashMap<T>::put(std::string key, T val) {
             }
         }
 
-        int index = fastrand() % (2 * SLOTS_PER_BUCKET);
+        int index = rand() % (2 * SLOTS_PER_BUCKET);
         HashPointer* temp_hash_pointer;
         if (0 <= index && index < SLOTS_PER_BUCKET)
             temp_hash_pointer = &m_table[h1 + index];
@@ -150,7 +162,7 @@ void BetterCuckooHashMap<T>::put(std::string key, T val) {
         temp_hash_pointer->ptr->key = curr_key;
         temp_hash_pointer->ptr->val = curr_val;
 
-        std::cout << "Swap " << curr_key << " with " << temp_key << std::endl;
+        //std::cout << "Swap " << curr_key << " with " << temp_key << std::endl;
 
         curr_key = temp_key;
         curr_val = temp_val;

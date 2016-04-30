@@ -5,7 +5,7 @@
 #include <pthread.h>
 
 
-#include "common/murmurhash3.h"
+
 
 #include "hash_map.h"
 #include "common/hash.h"
@@ -17,15 +17,15 @@
 #include "circular_queue.h"
 #include "common/CycleTimer.h"
 
-#define NUM_THREADS 10
+#define NUM_THREADS 48
 #define NUM_READERS 10
 #define NUM_WRITERS 2
 
-// #define NUM_BUCKETS 10 * 1000 * 1000
-// #define NUM_OPS 20 * 1000 * 1000
+#define NUM_BUCKETS 3 * 1000 * 1000
+#define NUM_OPS 6 * 1000 * 1000
 
-#define NUM_BUCKETS 2 * 1000 * 1000
-#define NUM_OPS 4 * 1000 * 1000
+//#define NUM_BUCKETS 2 * 1000 * 1000
+//#define NUM_OPS 4 * 1000 * 1000
 
 // #define NUM_BUCKETS 500
 // #define NUM_OPS 1000
@@ -234,7 +234,7 @@ void benchmark_cuckoo_hashmap() {
     best_put_time = 1e30;
     best_get_time = 1e30;
     for (int i = 0; i < 3; i++) {
-        CuckooHashMap<std::string> my_map(20 * NUM_BUCKETS);
+        CuckooHashMap<std::string> my_map(0.55 * NUM_BUCKETS);
 
         // PUT
         start_time = CycleTimer::currentSeconds();
@@ -269,7 +269,7 @@ void benchmark_better_cuckoo_hashmap() {
     best_put_time = 1e30;
     best_get_time = 1e30;
     for (int i = 0; i < 3; i++) {
-        BetterCuckooHashMap<std::string> my_map(20 * NUM_BUCKETS);
+        BetterCuckooHashMap<std::string> my_map(0.55 * NUM_BUCKETS);
 
         // PUT
         start_time = CycleTimer::currentSeconds();
@@ -305,7 +305,7 @@ void benchmark_optimistic_cuckoo_hashmap() {
     best_put_time = 1e30;
     best_get_time = 1e30;
     for (int i = 0; i < 3; i++) {
-        OptimisticCuckooHashMap<std::string> my_map(2*NUM_BUCKETS);
+        OptimisticCuckooHashMap<std::string> my_map(6*NUM_BUCKETS);
 
         // PUT
         start_time = CycleTimer::currentSeconds();
@@ -342,6 +342,7 @@ void benchmark_optimistic_cuckoo_hashmap() {
     std::cout << "Optimistic Cuckoo (" << NUM_THREADS << " threads): put: " << best_put_time << std::endl;
     std::cout << "Optimistic Cuckoo (" << NUM_THREADS << " threads): get: " << best_get_time << std::endl;
 
+    /*
     // Test interleaved reads and writes.
     best_put_time = 1e30;
     best_get_time = 1e30;
@@ -392,7 +393,7 @@ void benchmark_optimistic_cuckoo_hashmap() {
     }
     // std::cout << "Optimistic Cuckoo Interleaved (" << NUM_THREADS << " threads): put: " << best_put_time << std::endl;
     std::cout << "Optimistic Cuckoo Interleaved (" << NUM_THREADS << " threads): get: " << best_get_time << std::endl;
-
+    */
 }
 
 
@@ -595,12 +596,12 @@ int main() {
     // benchmark_builtin_unorderedmap();
     // benchmark_hashmap();
     // benchmark_coarse_hashmap();
-    // benchmark_cuckoo_hashmap();
-    // benchmark_better_cuckoo_hashmap();
+    benchmark_cuckoo_hashmap();
+    benchmark_better_cuckoo_hashmap();
     //benchmark_optimistic_cuckoo_hashmap();
     //benchmark_segment_hashmap();
 
-    benchmark_hash_functions();
+    //benchmark_hash_functions();
 
     // benchmark_atomic_operations();
     // benchmark_mod();
