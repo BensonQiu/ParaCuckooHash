@@ -181,7 +181,6 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
             m_visited_bitmap[evicted_index] = 1;
             path.push_back(evicted_index);
             temp_hash_entry = m_table[evicted_index];
-            //std::cout << "Place curr_key " << curr_key << " by evicting " << temp_hash_entry->key << " at index " << evicted_index << std::endl;
 
         } else {
             // Try to evict another index so that we don't get a cycle.
@@ -190,7 +189,6 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
                     m_visited_bitmap[i] = 1;
                     path.push_back(i);
                     temp_hash_entry = m_table[i];
-                    //std::cout << "Place curr_key " << curr_key << " by evicting " << temp_hash_entry->key << " at index " << i << std::endl;
                     goto EvictedKey;
                 }
             }
@@ -199,11 +197,9 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
                     m_visited_bitmap[i] = 1;
                     path.push_back(i);
                     temp_hash_entry = m_table[i];
-                    //std::cout << "Place curr_key " << curr_key << " by evicting " << temp_hash_entry->key << " at index " << i << std::endl;
                     goto EvictedKey;
                 }
             }
-            //std::cout << "Abort because of cycle" << std::endl;
             m_write_mutex.unlock();
             return;
         }
@@ -235,7 +231,6 @@ EvictedKey:
  SwapPathKeys:
 
     if (path.size() >= MAX_ITERS) {
-        //std::cout << "Abort from max number of iterations" << std::endl;
         m_write_mutex.unlock();
         return;
     }
@@ -262,13 +257,11 @@ EvictedKey:
     // }
 
 
-    //std::cout << "Long unwind for key: " << key << std::endl;
 
     // Case 2: Evictions needed to insert key.
     std::vector<int>::reverse_iterator key_version_iterator = key_version_array.rbegin();
     std::vector<int>::reverse_iterator path_iterator = path.rbegin();
 
-    ////std::cout << "Path Eviction size " << path.size() << std::endl;
 
     int to_index = *path_iterator++;
     m_visited_bitmap[to_index] = 0;
@@ -286,7 +279,6 @@ EvictedKey:
         to_hash_entry->key = from_hash_entry->key;
         to_hash_entry->val = from_hash_entry->val;
         m_table[to_index] = to_hash_entry;
-        //std::cout << "Moved key " << from_hash_entry->key << " from index " << from_index << " to index " << to_index << std::endl;
 
         __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
 
@@ -300,7 +292,6 @@ EvictedKey:
     __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
     m_table[first_index]->key = key;
     m_table[first_index]->val = val;
-    //std::cout << "Moved key " << m_table[first_index]->key << " from index " << -1 << " to index " << first_index << std::endl;
 
     __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
 
