@@ -25,7 +25,7 @@ class OptimisticCuckooHashMap {
         int m_num_buckets;
         uint32_t* m_key_version_counters;
         std::mutex m_write_mutex;
-
+        int* m_visited_bitmap;
 };
 
 #include "optimistic_cuckoo_hash_map.cpp"
