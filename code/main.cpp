@@ -11,6 +11,7 @@
 #include "cuckoo_hash_map.h"
 #include "better_cuckoo_hash_map.h"
 #include "optimistic_cuckoo_hash_map.h"
+#include "optimistic_cuckoo_tag_hash_map.h"
 #include "circular_queue.h"
 #include "common/CycleTimer.h"
 
@@ -36,6 +37,13 @@ struct CoarseWorkerArgs {
 
 struct OptimisticWorkerArgs {
     OptimisticCuckooHashMap<std::string> *my_map;
+    int thread_id;
+    std::string member_function;
+    std::string* keys;
+};
+
+struct OptimisticTagWorkerArgs {
+    OptimisticCuckooTagHashMap<std::string> *my_map;
     int thread_id;
     std::string member_function;
     std::string* keys;
@@ -70,6 +78,25 @@ void *coarse_thread_send_requests(void *threadArgs) {
 void *optimistic_thread_send_requests(void *threadArgs) {
     OptimisticWorkerArgs* args = static_cast<OptimisticWorkerArgs*>(threadArgs);
     OptimisticCuckooHashMap<std::string> *my_map = args->my_map;
+    int thread_ID = args->thread_id;
+    std::string member_function = args->member_function;
+    std::string* keys = args->keys;
+
+    if (member_function.compare("put") == 0) {
+        for (int i = thread_ID; i < NUM_OPS; i += NUM_THREADS) {
+            my_map->put(keys[i], "value" + keys[i]);
+        }
+    } else if (member_function.compare("get") == 0) {
+       for (int i = thread_ID; i < NUM_OPS; i += NUM_THREADS) {
+            my_map->get(keys[i]);
+        }
+    }
+    return NULL;
+}
+
+void *optimistic_tag_thread_send_requests(void *threadArgs) {
+    OptimisticTagWorkerArgs* args = static_cast<OptimisticTagWorkerArgs*>(threadArgs);
+    OptimisticCuckooTagHashMap<std::string> *my_map = args->my_map;
     int thread_ID = args->thread_id;
     std::string member_function = args->member_function;
     std::string* keys = args->keys;
@@ -429,6 +456,67 @@ void benchmark_optimistic_cuckoo_hashmap() {
 }
 
 
+void benchmark_optimistic_cuckoo_tag_hashmap() {
+
+    std::cout << "\nBenchmarking optimistic cuckoo tag hashmap..." << std::endl;
+
+    double start_time, end_time, best_put_time, best_get_time;
+
+    // Test separate reads and writes.
+    best_put_time = 1e30;
+    best_get_time = 1e30;
+    for (int i = 0; i < 3; i++) {
+        OptimisticCuckooTagHashMap<std::string> my_map(0.55*NUM_BUCKETS);
+
+        std::string* keys = new std::string[NUM_OPS];
+        for (int i = 0 ; i < NUM_OPS; i++)
+            keys[i] = std::to_string(i);
+
+        // PUT
+        start_time = CycleTimer::currentSeconds();
+        for (int j = 0; j < NUM_OPS; j++) {
+            // my_map.put(std::to_string(j), "value" + std::to_string(j));
+            my_map.put(keys[j], "value" + keys[j]);
+        }
+        end_time = CycleTimer::currentSeconds();
+        best_put_time = std::min(best_put_time, end_time-start_time);
+
+        // GET
+        start_time = CycleTimer::currentSeconds();
+
+        // for (int j = 0; j < NUM_OPS; j++) {
+        //     my_map.get(std::to_string(j));
+        //     // my_map.get(keys[j]);
+        // }
+
+        pthread_t workers[NUM_THREADS];
+        OptimisticTagWorkerArgs args[NUM_THREADS];
+
+        for (int j = 0; j < NUM_THREADS; j++) {
+            args[j].my_map = &my_map;
+            args[j].thread_id = (long int)j;
+            args[j].member_function = "get";
+            args[j].keys = keys;
+        }
+        for (int j = 0; j < NUM_THREADS; j++) {
+            pthread_create(&workers[j], NULL, optimistic_tag_thread_send_requests, &args[j]);
+        }
+        for (int j = 0; j < NUM_THREADS; j++) {
+            pthread_join(workers[j], NULL);
+        }
+
+        end_time = CycleTimer::currentSeconds();
+        best_get_time = std::min(best_get_time, end_time-start_time);
+
+        std::cout << best_put_time << std::endl;
+        std::cout << best_get_time << std::endl;
+
+    }
+    std::cout << "Optimistic Tag Cuckoo (" << NUM_THREADS << " threads): put: " << best_put_time << std::endl;
+    std::cout << "Optimistic Tag Cuckoo (" << NUM_THREADS << " threads): get: " << best_get_time << std::endl;
+}
+
+
 void benchmark_segment_hashmap() {
 
     std::cout << "\nBenchmarking segment hashmap..." << std::endl;
@@ -635,7 +723,8 @@ int main() {
     // benchmark_coarse_hashmap();
     // benchmark_cuckoo_hashmap();
     // benchmark_better_cuckoo_hashmap();
-    benchmark_optimistic_cuckoo_hashmap();
+    // benchmark_optimistic_cuckoo_hashmap();
+    benchmark_optimistic_cuckoo_tag_hashmap();
 
     // benchmark_segment_hashmap();
 
