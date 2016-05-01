@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Concurrent, In-Memory Key-Value Store</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/half-slider.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Key-Value Store</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li>
+                        <a href="index.html">Project Proposal</a>
+                    </li>
+                    <li>
+                        <a href="checkpoint.html">Checkpoint</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+
+    <br><br><br><br>
+
+    <!-- Page Content -->
+    <div class="container" id="proposal">
+
+        <div class="row">
+            <div class="col-lg-12">
+                <h1><center>Project Checkpoint</center></h1>
+                <h4><center>Team Members: Benson Qiu and Tommy Hung</center><h4>
+            </div>
+        </div>
+
+        <hr>
+
+    <!-- Page Content -->
+    <div class="container" id="checkpoint">
+
+        <div class="row">
+            <div class="col-lg-8">
+                <h1>Project Checkpoint</h1>
+
+                <hr>
+
+                <h2>Updated Schedule</h2>
+
+                <table border="1" style="width:100%">
+                  <tr>
+                    <td><b>&nbsp;Days</b></td>
+                    <td><b>&nbsp;Goal</b></td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;4/20 - 4/23</td>
+                    <td>&nbsp;Improve cache locality of optimistic concurrent cuckoo hashmap. <br>&nbsp;Create better test suite for benchmarking.</td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;4/24 - 4/30</td>
+                    <td>&nbsp;Additional optimizations for our optimistic concurrent cuckoo hashmap implementation.</td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;5/1 - 5/9</td>
+                    <td>&nbsp;Parallel cuckoo hashmap using BFS to speed up insertion time.</td>
+                  </tr>
+                </table>
+
+                <hr>
+
+                <h2>Work Completed So Far</h2>
+                <p>We have implemented the following:</p>
+                <ol>
+                    <li>Serial hashmap using separate chaining.</li>
+                    <li>Parallel implementation of (1) using chain-level locks.</li>
+                    <li>Sequential hashmap using cuckoo hashing.</li>
+                    <li>Sequential hashmap using cuckoo hashing with cache optimizations.</li>
+                    <li>Optimistic concurrent cuckoo hashmap. This implementation uses key version counters incremented using atomic instructions rather than mutexes for more fine grained parllelism. It also uses a modified path discovery/eviction policy that reduces false misses and allows for lower concurrent read latency during write conflicts.</li>
+                </ol>
+
+                <hr>
+
+                <h2>Preliminary Results</h2>
+
+                <table border="1" style="width:100%">
+                  <tr>
+                    <td><b>&nbsp;Implementation</b></td>
+                    <td><b>&nbsp;20M Insert Time (Seconds)</b></td>
+                    <td><b>&nbsp;20M Read Time (Seconds) </b></td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;C++11 Unordered Map</td>
+                    <td>&nbsp;32.91</td>
+                    <td>&nbsp;12.95</td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;Sequential Cuckoo</td>
+                    <td>&nbsp;13.93</td>
+                    <td>&nbsp;10.37</td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;Parallel (Bucket-Level) Separate Chaining with 48 Threads</td>
+                    <td>&nbsp;3.50</td>
+                    <td>&nbsp;1.47</td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;Optimistic Concurrent Cuckoo with 48 Threads</td>
+                    <td>&nbsp;21.91</td>
+                    <td>&nbsp;1.22</td>
+                  </tr>
+                </table>
+
+                <br>
+                <p>We have included preliminary results of our hashmap implementations above, running our test suite on an Intel Xeon E5645 CPU. As expected, the parallel bucket-level hashmap is faster than sequential implementations. One perhaps surprising result is that our optimistic concurrent cuckoo hashmap insertion is even slower than the sequential cuckoo hashmap. This is because the optimistic concurrent cuckoo hashmap is optimized for a read-heavy workload. We sacrifice insertion throughput but improve read throughput by minimizing the chances of concurrent read-write conflicts.</p>
+
+                <p>We have managed to implement most of what we originally planned to achieve by the end of the semester. However, to be fair, we believe that for versions (4) and (5), there are some performance bugs or implementation details that we may be missing that is preventing us from achieving even greater speedup. Specifically, we have not been able to achieve speedup by adding tags in (4) to improve cache locality and reduce pointer dereferences.</p>
+
+                <hr>
+
+                <h2>Presentation Plan</h2>
+                <p>We will create a number of graphs to visualize our benchmarking results. These graphs will mostly show the performance of different key-value store implementations as we vary the percentage of read and write requests.</p>
+
+                <hr>
+
+                <h2>Current Issues</h2>
+                <ol>
+                    <li>It is difficult to debug optimizations when they pass our correctness tests but do not provide additional performance.</li>
+                    <li>We are having trouble finding easy-to-use and accurate tools to measure cache performance. We plan on looking into perf soon, but have not had a chance to do so yet.</li>
+                </ol>
+
+            </div>
+        </div>
+
+        <hr>
+
+    </div>
+
+    <!-- /.container -->
+
+
+    <!-- jQuery -->
+    <script src"js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- Script to Activate the Carousel -->
+    <script>
+    $('.carousel').carousel({
+        interval: 5000 //changes the speed
+    })
+    </script>
+
+</body>
+
+</html>
