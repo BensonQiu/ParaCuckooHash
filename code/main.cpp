@@ -19,50 +19,31 @@
 #define NUM_READERS 48
 #define NUM_WRITERS 2
 
-#define NUM_BUCKETS 10 * 1000 * 1000
-#define NUM_OPS 20 * 1000 * 1000
+// #define NUM_BUCKETS 10 * 1000 * 1000
+// #define NUM_OPS 20 * 1000 * 1000
 
-// #define NUM_BUCKETS 1000 * 1000
-// #define NUM_OPS 2 * 1000 * 1000
+#define NUM_BUCKETS 2 * 1000 * 1000
+#define NUM_OPS 4 * 1000 * 1000
 
 // #define NUM_BUCKETS 500
 // #define NUM_OPS 1000
 
-struct CoarseWorkerArgs {
-    CoarseHashMap<std::string,std::string> *my_map;
+struct WorkerArgs {
+    void* my_map;
     int thread_id;
     std::string member_function;
     std::string* keys;
 };
 
-struct OptimisticWorkerArgs {
-    OptimisticCuckooHashMap<std::string> *my_map;
-    int thread_id;
-    std::string member_function;
-    std::string* keys;
-};
+template<typename T>
+void* thread_send_requests(void* threadArgs) {
+    WorkerArgs* args = static_cast<WorkerArgs*>(threadArgs);
 
-struct OptimisticTagWorkerArgs {
-    OptimisticCuckooTagHashMap<std::string> *my_map;
-    int thread_id;
-    std::string member_function;
-    std::string* keys;
-};
-
-struct SegmentWorkerArgs {
-    SegmentHashMap<std::string> *my_map;
-    int thread_id;
-    std::string member_function;
-    std::string* keys;
-};
-
-void *coarse_thread_send_requests(void *threadArgs) {
-    CoarseWorkerArgs* args = static_cast<CoarseWorkerArgs*>(threadArgs);
-    CoarseHashMap<std::string,std::string> *my_map = args->my_map;
     int thread_ID = args->thread_id;
     std::string member_function = args->member_function;
     std::string* keys = args->keys;
 
+    T* my_map = (T*)args->my_map;
     if (member_function.compare("put") == 0) {
         for (int i = thread_ID; i < NUM_OPS; i += NUM_THREADS) {
             my_map->put(keys[i], "value" + keys[i]);
@@ -72,66 +53,9 @@ void *coarse_thread_send_requests(void *threadArgs) {
             my_map->get(keys[i]);
         }
     }
+
     return NULL;
 }
-
-void *optimistic_thread_send_requests(void *threadArgs) {
-    OptimisticWorkerArgs* args = static_cast<OptimisticWorkerArgs*>(threadArgs);
-    OptimisticCuckooHashMap<std::string> *my_map = args->my_map;
-    int thread_ID = args->thread_id;
-    std::string member_function = args->member_function;
-    std::string* keys = args->keys;
-
-    if (member_function.compare("put") == 0) {
-        for (int i = thread_ID; i < NUM_OPS; i += NUM_THREADS) {
-            my_map->put(keys[i], "value" + keys[i]);
-        }
-    } else if (member_function.compare("get") == 0) {
-       for (int i = thread_ID; i < NUM_OPS; i += NUM_THREADS) {
-            my_map->get(keys[i]);
-        }
-    }
-    return NULL;
-}
-
-void *optimistic_tag_thread_send_requests(void *threadArgs) {
-    OptimisticTagWorkerArgs* args = static_cast<OptimisticTagWorkerArgs*>(threadArgs);
-    OptimisticCuckooTagHashMap<std::string> *my_map = args->my_map;
-    int thread_ID = args->thread_id;
-    std::string member_function = args->member_function;
-    std::string* keys = args->keys;
-
-    if (member_function.compare("put") == 0) {
-        for (int i = thread_ID; i < NUM_OPS; i += NUM_THREADS) {
-            my_map->put(keys[i], "value" + keys[i]);
-        }
-    } else if (member_function.compare("get") == 0) {
-       for (int i = thread_ID; i < NUM_OPS; i += NUM_THREADS) {
-            my_map->get(keys[i]);
-        }
-    }
-    return NULL;
-}
-
-void *segment_thread_send_requests(void *threadArgs) {
-    SegmentWorkerArgs* args = static_cast<SegmentWorkerArgs*>(threadArgs);
-    SegmentHashMap<std::string> *my_map = args->my_map;
-    int thread_ID = args->thread_id;
-    std::string member_function = args->member_function;
-    std::string* keys = args->keys;
-
-    if (member_function.compare("put") == 0) {
-        for (int i = thread_ID; i < NUM_OPS; i += NUM_THREADS) {
-            my_map->put(keys[i], "value" + keys[i]);
-        }
-    } else if (member_function.compare("get") == 0) {
-       for (int i = thread_ID; i < NUM_OPS; i += NUM_THREADS) {
-            my_map->get(keys[i]);
-        }
-    }
-    return NULL;
-}
-
 
 void benchmark_builtin_unorderedmap() {
 
@@ -219,22 +143,22 @@ void benchmark_coarse_hashmap() {
     best_put_time = 1e30;
     best_get_time = 1e30;
     for (int i = 0; i < 3; i++) {
-        CoarseHashMap<std::string, std::string> my_map(NUM_BUCKETS/2);
+        CoarseHashMap<std::string, std::string> my_map(NUM_OPS/8);
 
         // PUT
         start_time = CycleTimer::currentSeconds();
 
         pthread_t workers[NUM_THREADS];
-        CoarseWorkerArgs args[NUM_THREADS];
+        WorkerArgs args[NUM_THREADS];
 
         for (int j = 0; j < NUM_THREADS; j++) {
-            args[j].my_map = &my_map;
+            args[j].my_map = (void*)&my_map;
             args[j].thread_id = (long int)j;
             args[j].member_function = "put";
             args[j].keys = keys;
         }
         for (int j = 0; j < NUM_THREADS; j++) {
-            pthread_create(&workers[j], NULL, coarse_thread_send_requests, &args[j]);
+            pthread_create(&workers[j], NULL, thread_send_requests<CoarseHashMap<std::string, std::string>>, &args[j]);
         }
         for (int j = 0; j < NUM_THREADS; j++) {
             pthread_join(workers[j], NULL);
@@ -246,12 +170,13 @@ void benchmark_coarse_hashmap() {
         // GET
         start_time = CycleTimer::currentSeconds();
         for (int j = 0; j < NUM_THREADS; j++) {
-            args[j].my_map = &my_map;
+            args[j].my_map = (void*)&my_map;
             args[j].thread_id = (long int)j;
             args[j].member_function = "get";
+            args[j].keys = keys;
         }
         for (int j = 0; j < NUM_THREADS; j++) {
-            pthread_create(&workers[j], NULL, coarse_thread_send_requests, &args[j]);
+            pthread_create(&workers[j], NULL, thread_send_requests<CoarseHashMap<std::string, std::string>>, &args[j]);
         }
         for (int j = 0; j < NUM_THREADS; j++) {
             pthread_join(workers[j], NULL);
@@ -259,8 +184,8 @@ void benchmark_coarse_hashmap() {
         end_time = CycleTimer::currentSeconds();
         best_get_time = std::min(best_get_time, end_time-start_time);
 
-        // std::cout << best_put_time << std::endl;
-        // std::cout << best_get_time << std::endl << std::endl;
+        std::cout << best_put_time << std::endl;
+        std::cout << best_get_time << std::endl << std::endl;
     }
     std::cout << "Coarse (" << NUM_THREADS << " threads): put: " << best_put_time << std::endl;
     std::cout << "Coarse (" << NUM_THREADS << " threads): get: " << best_get_time << std::endl;
@@ -351,7 +276,7 @@ void benchmark_optimistic_cuckoo_hashmap() {
     best_put_time = 1e30;
     best_get_time = 1e30;
     for (int i = 0; i < 3; i++) {
-        OptimisticCuckooHashMap<std::string> my_map(0.55*NUM_BUCKETS);
+        OptimisticCuckooHashMap<std::string> my_map(1.11f*NUM_OPS/4.0f);
 
         std::string* keys = new std::string[NUM_OPS];
         for (int i = 0 ; i < NUM_OPS; i++)
@@ -360,7 +285,6 @@ void benchmark_optimistic_cuckoo_hashmap() {
         // PUT
         start_time = CycleTimer::currentSeconds();
         for (int j = 0; j < NUM_OPS; j++) {
-            // my_map.put(std::to_string(j), "value" + std::to_string(j));
             my_map.put(keys[j], "value" + keys[j]);
         }
         end_time = CycleTimer::currentSeconds();
@@ -375,16 +299,16 @@ void benchmark_optimistic_cuckoo_hashmap() {
         // }
 
         pthread_t workers[NUM_THREADS];
-        OptimisticWorkerArgs args[NUM_THREADS];
+        WorkerArgs args[NUM_THREADS];
 
         for (int j = 0; j < NUM_THREADS; j++) {
-            args[j].my_map = &my_map;
+            args[j].my_map = (void*)&my_map;
             args[j].thread_id = (long int)j;
             args[j].member_function = "get";
             args[j].keys = keys;
         }
         for (int j = 0; j < NUM_THREADS; j++) {
-            pthread_create(&workers[j], NULL, optimistic_thread_send_requests, &args[j]);
+            pthread_create(&workers[j], NULL, thread_send_requests<OptimisticCuckooHashMap<std::string>>, &args[j]);
         }
         for (int j = 0; j < NUM_THREADS; j++) {
             pthread_join(workers[j], NULL);
@@ -393,9 +317,8 @@ void benchmark_optimistic_cuckoo_hashmap() {
         end_time = CycleTimer::currentSeconds();
         best_get_time = std::min(best_get_time, end_time-start_time);
 
-        std::cout << best_put_time << std::endl;
-        std::cout << best_get_time << std::endl;
-
+        // std::cout << best_put_time << std::endl;
+        // std::cout << best_get_time << std::endl;
     }
     std::cout << "Optimistic Cuckoo (" << NUM_THREADS << " threads): put: " << best_put_time << std::endl;
     std::cout << "Optimistic Cuckoo (" << NUM_THREADS << " threads): get: " << best_get_time << std::endl;
@@ -417,10 +340,10 @@ void benchmark_optimistic_cuckoo_hashmap() {
         start_time = CycleTimer::currentSeconds();
 
         pthread_t workers[NUM_READERS + NUM_WRITERS];
-        OptimisticWorkerArgs args[NUM_READERS + NUM_WRITERS];
+        WorkerArgs args[NUM_READERS + NUM_WRITERS];
 
         for (int j = 0; j < NUM_READERS+NUM_WRITERS; j++) {
-            args[j].my_map = &my_map;
+            args[j].my_map = (void*)&my_map;
             args[j].thread_id = (long int)j;
             args[j].keys = keys;
             if (j < NUM_READERS)
@@ -430,7 +353,7 @@ void benchmark_optimistic_cuckoo_hashmap() {
         }
 
         for (int j = 0; j < NUM_READERS + NUM_WRITERS; j++) {
-            pthread_create(&workers[j], NULL, optimistic_thread_send_requests, &args[j]);
+            pthread_create(&workers[j], NULL, thread_send_requests<OptimisticCuckooHashMap<std::string>>, &args[j]);
         }
 
         // Only wait for the reader threads to complete before
@@ -466,7 +389,7 @@ void benchmark_optimistic_cuckoo_tag_hashmap() {
     best_put_time = 1e30;
     best_get_time = 1e30;
     for (int i = 0; i < 3; i++) {
-        OptimisticCuckooTagHashMap<std::string> my_map(0.55*NUM_BUCKETS);
+        OptimisticCuckooTagHashMap<std::string> my_map(1.11f*NUM_OPS/4.0f); // 90% Space Efficiency
 
         std::string* keys = new std::string[NUM_OPS];
         for (int i = 0 ; i < NUM_OPS; i++)
@@ -490,16 +413,16 @@ void benchmark_optimistic_cuckoo_tag_hashmap() {
         // }
 
         pthread_t workers[NUM_THREADS];
-        OptimisticTagWorkerArgs args[NUM_THREADS];
+        WorkerArgs args[NUM_THREADS];
 
         for (int j = 0; j < NUM_THREADS; j++) {
-            args[j].my_map = &my_map;
+            args[j].my_map = (void*)&my_map;
             args[j].thread_id = (long int)j;
             args[j].member_function = "get";
             args[j].keys = keys;
         }
         for (int j = 0; j < NUM_THREADS; j++) {
-            pthread_create(&workers[j], NULL, optimistic_tag_thread_send_requests, &args[j]);
+            pthread_create(&workers[j], NULL, thread_send_requests<OptimisticCuckooTagHashMap<std::string>>, &args[j]);
         }
         for (int j = 0; j < NUM_THREADS; j++) {
             pthread_join(workers[j], NULL);
@@ -510,7 +433,6 @@ void benchmark_optimistic_cuckoo_tag_hashmap() {
 
         std::cout << best_put_time << std::endl;
         std::cout << best_get_time << std::endl;
-
     }
     std::cout << "Optimistic Tag Cuckoo (" << NUM_THREADS << " threads): put: " << best_put_time << std::endl;
     std::cout << "Optimistic Tag Cuckoo (" << NUM_THREADS << " threads): get: " << best_get_time << std::endl;
@@ -533,7 +455,7 @@ void benchmark_segment_hashmap() {
         SegmentHashMap<std::string> my_map(40*NUM_BUCKETS, 64);
 
         pthread_t workers[NUM_THREADS];
-        SegmentWorkerArgs args[NUM_THREADS];
+        WorkerArgs args[NUM_THREADS];
 
         // PUT
         start_time = CycleTimer::currentSeconds();
@@ -542,13 +464,13 @@ void benchmark_segment_hashmap() {
         //     my_map.put(key, "value" + key);
         // }
         for (int j = 0; j < NUM_THREADS; j++) {
-            args[j].my_map = &my_map;
+            args[j].my_map = (void*)&my_map;
             args[j].thread_id = (long int)j;
             args[j].member_function = "put";
             args[j].keys = keys;
         }
         for (int j = 0; j < NUM_THREADS; j++) {
-            pthread_create(&workers[j], NULL, segment_thread_send_requests, &args[j]);
+            pthread_create(&workers[j], NULL, thread_send_requests<SegmentHashMap<std::string>>, &args[j]);
         }
         for (int j = 0; j < NUM_THREADS; j++) {
             pthread_join(workers[j], NULL);
@@ -560,13 +482,13 @@ void benchmark_segment_hashmap() {
         // GET
         start_time = CycleTimer::currentSeconds();
         for (int j = 0; j < NUM_THREADS; j++) {
-            args[j].my_map = &my_map;
+            args[j].my_map = (void*)&my_map;
             args[j].thread_id = (long int)j;
             args[j].member_function = "get";
             args[j].keys = keys;
         }
         for (int j = 0; j < NUM_THREADS; j++) {
-            pthread_create(&workers[j], NULL, segment_thread_send_requests, &args[j]);
+            pthread_create(&workers[j], NULL, thread_send_requests<SegmentHashMap<std::string>>, &args[j]);
         }
         for (int j = 0; j < NUM_THREADS; j++) {
             pthread_join(workers[j], NULL);
@@ -720,12 +642,11 @@ int main() {
 
     // benchmark_builtin_unorderedmap();
     // benchmark_hashmap();
-    // benchmark_coarse_hashmap();
+    benchmark_coarse_hashmap();
     // benchmark_cuckoo_hashmap();
     // benchmark_better_cuckoo_hashmap();
     // benchmark_optimistic_cuckoo_hashmap();
     benchmark_optimistic_cuckoo_tag_hashmap();
-
     // benchmark_segment_hashmap();
 
     // benchmark_hash_functions();
