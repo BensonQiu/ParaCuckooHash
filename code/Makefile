@@ -1,6 +1,6 @@
 CC=g++
 
-CFLAGS=-std=c++11 -lpthread -lboost_system -lboost_thread
+CFLAGS=-std=c++11 -lpthread
 
 TARGET=main
 

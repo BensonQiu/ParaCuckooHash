@@ -504,41 +504,6 @@ void benchmark_segment_hashmap() {
 }
 
 
-/*
-void benchmark_mutex_types() {
-
-    std::cout << "\nBenchmarking mutexes..." << std::endl;
-
-    double start_time, end_time, best_time;
-
-    best_time = 1e30;
-
-    for (int i = 0; i < 3; i++) {
-        start_time = CycleTimer::currentSeconds();
-        boost::shared_mutex mutex;
-        for (int j = 0; j < NUM_OPS; j++) {
-            boost::shared_lock<boost::shared_mutex> lock(mutex);
-        }
-        end_time = CycleTimer::currentSeconds();
-        best_time = std::min(best_time, end_time-start_time);
-    }
-    std::cout << "Shared mutex time: " << best_time << std::endl;
-
-    best_time = 1e30;
-    for (int i = 0; i < 3; i++) {
-        start_time = CycleTimer::currentSeconds();
-        std::mutex mutex;
-        for (int j = 0; j < NUM_OPS; j++) {
-            mutex.lock();
-            mutex.unlock();
-        }
-        end_time = CycleTimer::currentSeconds();
-        best_time = std::min(best_time, end_time-start_time);
-    }
-    std::cout << "Reg mutex time: " << best_time << std::endl;
-}
-*/
-
 void benchmark_hash_functions(){
 
   std::cout << "\nBenchmarking hash functions..." << std::endl;
