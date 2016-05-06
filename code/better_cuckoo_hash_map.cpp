@@ -98,7 +98,7 @@ void BetterCuckooHashMap<T>::put(std::string key, T val) {
         // std::cout << "Put Tag: " << (int) tag << std::endl;
 
         // Look at the first bucket.
-        for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
+        for (unsigned int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
             HashPointer hash_pointer = m_table[i];
 
             if (hash_pointer.ptr == NULL) {
@@ -117,7 +117,7 @@ void BetterCuckooHashMap<T>::put(std::string key, T val) {
         }
 
         // Look at the second bucket.
-        for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++) {
+        for (unsigned int i = h2; i < h2 + SLOTS_PER_BUCKET; i++) {
 
             HashPointer hash_pointer = m_table[i];
 
@@ -158,46 +158,6 @@ void BetterCuckooHashMap<T>::put(std::string key, T val) {
     }
 
     std::cout << "Abort" << std::endl;
-}
-
-template <typename T>
-bool BetterCuckooHashMap<T>::remove(std::string key) {
-    // // Hash to two buckets.
- //    uint32_t h1, h2;
- //    hashlittle2((void*)&key, key.length(), &h1, &h2);
-
- //    h1 = h1 % m_num_buckets;
- //    h2 = h2 % m_num_buckets;
- //    unsigned char tag = tag_hash(key);
-
- //    // Look at the first bucket.
- //    for (int i = (int)h1; i < (int)h1 + SLOTS_PER_BUCKET; i++) {
- //     HashPointer* hash_pointer = m_table[i];
- //     if (hash_pointer != NULL && tag == hash_pointer->tag) {
- //         HashEntry* hash_entry = hash_pointer->ptr;
- //         if (key == hash_entry->key) {
- //             delete hash_entry;
- //             delete hash_pointer;
- //             m_table[i] = NULL;
- //             return true;
- //         }
- //     }
- //    }
-
- //    // Look at the second bucket.
-    // for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++) {
- //     HashPointer* hash_pointer = m_table[i];
- //     if (hash_pointer != NULL && tag == hash_pointer->tag) {
- //         HashEntry* hash_entry = hash_pointer->ptr;
- //         if (key == hash_entry->key) {
- //             delete hash_entry;
- //             delete hash_pointer;
- //             m_table[i] = NULL;
- //             return true;
- //         }
- //     }
- //    }
- //    return false;
 }
 
 template <typename T>

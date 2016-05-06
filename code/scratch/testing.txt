@@ -1,0 +1,3 @@
+randomized inputs
+read/write with keys that hash to the same value
+read on full hash-table (guaranteed constant time)

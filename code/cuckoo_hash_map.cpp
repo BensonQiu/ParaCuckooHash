@@ -32,7 +32,7 @@ T CuckooHashMap<T>::get(std::string key) {
     h1 *= SLOTS_PER_BUCKET;
 
     // Look at the first bucket.
-    for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
+    for (unsigned int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
         HashEntry* hash_entry = m_table[i];
         if (hash_entry != NULL) {
             if (key == hash_entry->key)
@@ -45,7 +45,7 @@ T CuckooHashMap<T>::get(std::string key) {
     h2 *= SLOTS_PER_BUCKET;
 
     // Look at the second bucket.
-    for (int i = h2; i < h2 + SLOTS_PER_BUCKET; i++) {
+    for (unsigned int i = h2; i < h2 + SLOTS_PER_BUCKET; i++) {
         HashEntry* hash_entry = m_table[i];
         if (hash_entry != NULL) {
             if (key == hash_entry->key)
@@ -78,7 +78,7 @@ void CuckooHashMap<T>::put(std::string key, T val) {
         //std::cout << "Put Key: " << curr_key << ", Bucket 1: " << h1 << ", Bucket 2: " << h2 << std::endl;
 
         // Look at the first bucket.
-        for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
+        for (unsigned int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
 
             HashEntry* hash_entry = m_table[i];
 
@@ -96,7 +96,7 @@ void CuckooHashMap<T>::put(std::string key, T val) {
         }
 
         // Look at the second bucket.
-        for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++) {
+        for (unsigned int i = h2; i < h2 + SLOTS_PER_BUCKET; i++) {
             HashEntry* hash_entry = m_table[i];
             if (hash_entry == NULL) {
                 HashEntry* hash_entry = new HashEntry();
@@ -111,7 +111,7 @@ void CuckooHashMap<T>::put(std::string key, T val) {
             }
         }
 
-        int index = fastrand() % (2 * SLOTS_PER_BUCKET);
+        int index = rand() % (2 * SLOTS_PER_BUCKET);
         HashEntry* temp_hash_entry;
         if (0 <= index && index < SLOTS_PER_BUCKET)
             temp_hash_entry = m_table[h1 + index];
@@ -132,44 +132,4 @@ void CuckooHashMap<T>::put(std::string key, T val) {
     }
 
     std::cout << "Abort" << std::endl;
-}
-
-template <typename T>
-bool CuckooHashMap<T>::remove(std::string key) {
-    // // Hash to two buckets.
- //    uint32_t h1, h2;
- //    hashlittle2((void*)&key, key.length(), &h1, &h2);
-
- //    h1 = h1 % m_num_buckets;
- //    h2 = h2 % m_num_buckets;
- //    unsigned char tag = tag_hash(key);
-
- //    // Look at the first bucket.
- //    for (int i = (int)h1; i < (int)h1 + SLOTS_PER_BUCKET; i++) {
- //     HashPointer* hash_pointer = m_table[i];
- //     if (hash_pointer != NULL && tag == hash_pointer->tag) {
- //         HashEntry* hash_entry = hash_pointer->ptr;
- //         if (key == hash_entry->key) {
- //             delete hash_entry;
- //             delete hash_pointer;
- //             m_table[i] = NULL;
- //             return true;
- //         }
- //     }
- //    }
-
- //    // Look at the second bucket.
-    // for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++) {
- //     HashPointer* hash_pointer = m_table[i];
- //     if (hash_pointer != NULL && tag == hash_pointer->tag) {
- //         HashEntry* hash_entry = hash_pointer->ptr;
- //         if (key == hash_entry->key) {
- //             delete hash_entry;
- //             delete hash_pointer;
- //             m_table[i] = NULL;
- //             return true;
- //         }
- //     }
- //    }
-    return false;
 }

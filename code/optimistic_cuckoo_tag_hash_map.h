@@ -1,16 +1,17 @@
-#ifndef BETTER_CUCKOO_HASHMAP_H
-#define BETTER_CUCKOO_HASHMAP_H
+#ifndef OPTIMISTIC_CUCKOO_TAG_HASHMAP_H
+#define OPTIMISTIC_CUCKOO_TAG_HASHMAP_H
 
 
 template <typename T>
-class BetterCuckooHashMap {
+class OptimisticCuckooTagHashMap {
 
     public:
         const int SLOTS_PER_BUCKET = 4;
         const int MAX_ITERS = 500;
+        const int NUM_KEY_VERSION_COUNTERS = 8192;
 
-        BetterCuckooHashMap(int num_buckets=64);
-        ~BetterCuckooHashMap();
+        OptimisticCuckooTagHashMap(int num_buckets=64);
+        ~OptimisticCuckooTagHashMap();
 
         T get(std::string key);
         void put(std::string key, T val);
@@ -26,21 +27,18 @@ class BetterCuckooHashMap {
             HashEntry* ptr;
         };
 
+        // HashEntry **m_table;
         HashPointer *m_table;
         int m_num_buckets;
+        uint32_t* m_key_version_counters;
+        std::mutex m_write_mutex;
+        int* m_visited_bitmap;
 
         int m_tagmask = 0xff;
 
         unsigned char tag_hash(const uint32_t hv);
-
-        inline int fastrand() const {
-            int g_seed = (214013*g_seed+2531011);
-            return (g_seed>>16)&0x7FFF;
-        }
-
-
 };
 
-#include "better_cuckoo_hash_map.cpp"
+#include "optimistic_cuckoo_tag_hash_map.cpp"
 
 #endif

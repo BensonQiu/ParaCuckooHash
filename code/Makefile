@@ -1,10 +1,10 @@
 CC=g++
 
-CFLAGS=-std=c++11 -lpthread -lboost_system -lboost_thread
+CFLAGS=-std=c++11 -Werror -Wall -Wextra -lpthread
 
-TARGET=main
+TARGET=benchmark/main
 
-EXECUTABLE=benchmark
+EXECUTABLE=run_benchmark
 
 all: $(TARGET)
 
