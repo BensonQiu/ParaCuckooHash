@@ -43,7 +43,6 @@ T FineHashMap<T>::get(std::string key) {
 
 	m_bucket_mutexes[bucket].lock();
 
-	HashEntry *prev = NULL;
 	HashEntry *curr = m_table[bucket];
 
 	while (curr != NULL) {
