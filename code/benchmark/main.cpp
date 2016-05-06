@@ -11,6 +11,7 @@
 #include "benchmark_fine.h"
 #include "benchmark_cuckoo.h"
 #include "benchmark_opt_cuckoo_tag.h"
+#include "benchmark_opt_cuckoo.h"
 
 #define NUM_THREADS 16
 #define NUM_READERS 6
@@ -29,11 +30,14 @@ int main() {
     // BenchmarkFineHashMap<std::string> benchmark_fine(NUM_OPS);
     // benchmark_fine.run_all();
 
-    BenchmarkCuckooHashMap<std::string> benchmark_cuckoo(NUM_OPS);
-    benchmark_cuckoo.run_all();
+    //BenchmarkCuckooHashMap<std::string> benchmark_cuckoo(NUM_OPS);
+    //benchmark_cuckoo.run_all();
 
     BenchmarkOptCuckooTagHashMap<std::string> benchmark_opt_cuckoo_tag(NUM_OPS);
     benchmark_opt_cuckoo_tag.run_all();
+
+    BenchmarkOptCuckooHashMap<std::string> benchmark_opt_cuckoo(NUM_OPS);
+    benchmark_opt_cuckoo.run_all();
 
     return 0;
 }
