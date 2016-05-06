@@ -26,14 +26,14 @@ int main() {
 
     std::cout << "***** Starting benchmark with " << NUM_OPS << " operations *****" << std::endl;
 
-    BenchmarkFineHashMap<std::string> benchmark_fine(NUM_OPS);
+    // BenchmarkFineHashMap<std::string> benchmark_fine(NUM_OPS);
     // benchmark_fine.run_all();
 
     BenchmarkCuckooHashMap<std::string> benchmark_cuckoo(NUM_OPS);
     benchmark_cuckoo.run_all();
 
     BenchmarkOptCuckooTagHashMap<std::string> benchmark_opt_cuckoo_tag(NUM_OPS);
-    // benchmark_opt_cuckoo_tag.run_all();
+    benchmark_opt_cuckoo_tag.run_all();
 
     return 0;
 }
