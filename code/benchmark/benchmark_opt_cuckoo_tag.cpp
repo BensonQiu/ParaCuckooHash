@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#include "../optimistic_cuckoo_tag_hash_map.h"
+// #include "../optimistic_cuckoo_tag_hash_map.h"
 #include "../common/CycleTimer.h"
 #include "../common/errors.h"
 #include "thread_send_requests.h"
@@ -15,8 +15,6 @@ BenchmarkOptCuckooTagHashMap<T>::BenchmarkOptCuckooTagHashMap(
 	m_space_efficiency = space_efficiency;
 	m_slots_per_bucket = slots_per_bucket;
 	m_num_buckets = (1.0f/m_space_efficiency) * m_num_ops / float(m_slots_per_bucket);
-
-	std::cout << "Num Buckets: " << m_num_buckets << std::endl;
 
 	m_random_keys = new std::string[m_num_ops];
 	for (int i=0; i<m_num_ops; i++) {
@@ -44,46 +42,9 @@ void BenchmarkOptCuckooTagHashMap<T>::benchmark_random_interleaved_read_write() 
 template <typename T>
 void BenchmarkOptCuckooTagHashMap<T>::benchmark_read_only() {
 
-	double start_time, end_time, best_time;
-
-	// Warm up the hashmap with sequential insertions.
     OptimisticCuckooTagHashMap<T> my_map(m_num_buckets);
-	for (int i = 0; i < m_num_ops; i++) {
-		my_map.put(m_random_keys[i], m_random_keys[i]);
-	}
+    float best_time = m_benchmark_reads_helper(&my_map);
 
-	// Setup thread args.
-    pthread_t workers[NUM_READERS];
-    WorkerArgs args[NUM_READERS];
-
-    for (int i = 0; i < NUM_READERS; i++) {
-        args[i].my_map = (void*)&my_map;
-        args[i].thread_id = (long int)i;
-        args[i].num_threads = NUM_READERS;
-        // args[i].num_readers = NUM_READERS;
-        // args[i].num_writers = 0;
-        args[i].num_ops = m_num_ops;
-        args[i].percent_reads = 1.0f;
-        // args[i].member_function = "get";
-        args[i].keys = m_random_keys;
-    }
-
-    // Take the best time of three runs.
-    best_time = 1e30;
-    for (int i = 0; i < 10; i++) {
-
-        start_time = CycleTimer::currentSeconds();
-	    for (int j = 0; j < NUM_READERS; j++) {
-	        pthread_create(&workers[j], NULL,
-	        	thread_send_requests<OptimisticCuckooTagHashMap<T>>, &args[j]);
-	    }
-	    for (int j = 0; j < NUM_READERS; j++) {
-	        pthread_join(workers[j], NULL);
-	    }
-        end_time = CycleTimer::currentSeconds();
-        best_time = std::min(best_time, end_time-start_time);
-        std::cout << "\t" << end_time-start_time << std::endl;
-    }
     std::cout << "\t" << "Read-Only (" << NUM_READERS << " Reader Threads): " << best_time << std::endl;
 }
 
@@ -160,14 +121,72 @@ void BenchmarkOptCuckooTagHashMap<T>::benchmark_read_only_single_bucket() {
 }
 
 template <typename T>
+void BenchmarkOptCuckooTagHashMap<T>::benchmark_space_efficiency() {
+
+	for (float space_efficiency = 0.15f; space_efficiency <= 0.9f; space_efficiency += 0.15f) {
+		int num_buckets = (1.0f/space_efficiency) * m_num_ops / float(m_slots_per_bucket);
+	    OptimisticCuckooTagHashMap<T> my_map(num_buckets);
+		float best_time = m_benchmark_reads_helper(&my_map);
+
+	    std::cout << "\t" << 100*space_efficiency << "% Space Efficiency ("
+	              << NUM_READERS << " Reader Threads): " << best_time << std::endl;
+	}
+}
+
+template <typename T>
+float BenchmarkOptCuckooTagHashMap<T>::m_benchmark_reads_helper(
+		OptimisticCuckooTagHashMap<T>* my_map) {
+
+	// Warm up the hashmap.
+	for (int i = 0; i < m_num_ops; i++) {
+		my_map->put(m_random_keys[i], m_random_keys[i]);
+	}
+
+	// Setup thread args.
+    pthread_t workers[NUM_READERS];
+    WorkerArgs args[NUM_READERS];
+
+    for (int i = 0; i < NUM_READERS; i++) {
+        args[i].my_map = (void*)my_map;
+        args[i].thread_id = (long int)i;
+        args[i].num_threads = NUM_READERS;
+        args[i].num_ops = m_num_ops;
+        args[i].percent_reads = 1.0f;
+        args[i].keys = m_random_keys;
+    }
+
+	double start_time, end_time, best_time;
+
+    // Take the best of 3 runs.
+    best_time = 1e30;
+    for (int i = 0; i < 3; i++) {
+
+        start_time = CycleTimer::currentSeconds();
+	    for (int j = 0; j < NUM_READERS; j++) {
+	        pthread_create(&workers[j], NULL,
+	        	thread_send_requests<OptimisticCuckooTagHashMap<T>>, &args[j]);
+	    }
+	    for (int j = 0; j < NUM_READERS; j++) {
+	        pthread_join(workers[j], NULL);
+	    }
+        end_time = CycleTimer::currentSeconds();
+        best_time = std::min(best_time, end_time-start_time);
+        // std::cout << "\t" << end_time-start_time << std::endl;
+    }
+
+	return best_time;
+}
+
+template <typename T>
 void BenchmarkOptCuckooTagHashMap<T>::run_all() {
 
 	std::cout << "Benchmarking Optimistic Cuckoo Tag HashMap, " << m_num_ops << " Operations..." << std::endl;
 
-	// benchmark_random_interleaved_read_write();
+	benchmark_random_interleaved_read_write();
 	benchmark_read_only();
-	// benchmark_write_only();
-	// benchmark_read_only_single_bucket();
+	benchmark_write_only();
+	benchmark_read_only_single_bucket();
+	benchmark_space_efficiency();
 
     std::cout << std::endl;
 

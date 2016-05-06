@@ -1,6 +1,7 @@
 #ifndef BENCHMARK_OPT_CUCKOO_TAG_H
 #define BENCHMARK_OPT_CUCKOO_TAG_H
 
+#include "../optimistic_cuckoo_tag_hash_map.h"
 
 template <typename T>
 class BenchmarkOptCuckooTagHashMap {
@@ -20,7 +21,9 @@ class BenchmarkOptCuckooTagHashMap {
 		void benchmark_read_only();
 		void benchmark_write_only();
 		void benchmark_read_only_single_bucket();
+		void benchmark_space_efficiency();
 		void run_all();
+		float m_benchmark_reads_helper(OptimisticCuckooTagHashMap<T>* my_map);
 
 	private:
 		int m_num_ops;
@@ -28,6 +31,7 @@ class BenchmarkOptCuckooTagHashMap {
 		int m_slots_per_bucket;
 		int m_num_buckets;
 		std::string* m_random_keys;
+
 };
 
 #include "benchmark_opt_cuckoo_tag.cpp"
