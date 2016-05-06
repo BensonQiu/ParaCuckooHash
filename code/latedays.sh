@@ -4,7 +4,7 @@
 cd $SCRATCH
 
 execdir=/home/bqiu/15418FinalProject/code
-exe=benchmark
+exe=run_benchmark
 
 cp ${execdir}/${exe} ${exe}
 

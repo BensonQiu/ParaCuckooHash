@@ -2,9 +2,9 @@ CC=g++
 
 CFLAGS=-std=c++11 -lpthread
 
-TARGET=main
+TARGET=benchmark/main
 
-EXECUTABLE=benchmark
+EXECUTABLE=run_benchmark
 
 all: $(TARGET)
 

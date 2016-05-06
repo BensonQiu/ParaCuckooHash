@@ -6,21 +6,21 @@
 #include "common/errors.h"
 
 
-template <typename T, typename U>
-CoarseHashMap<T,U>::CoarseHashMap(int table_size, float max_load_factor) {
+template <typename T>
+FineHashMap<T>::FineHashMap(int table_size, float max_load_factor) {
 
-			m_table_size = table_size;
-			m_size = 0;
-			m_max_load_factor = max_load_factor;
-			m_table = new HashEntry*[table_size];
-			m_bucket_mutexes = new std::mutex[table_size];
+	m_table_size = table_size;
+	m_size = 0;
+	m_max_load_factor = max_load_factor;
+	m_table = new HashEntry*[table_size];
+	m_bucket_mutexes = new std::mutex[table_size];
 
-			for (int i = 0; i < table_size; i++)
-				m_table[i] = NULL;
-		}
+	for (int i = 0; i < table_size; i++)
+		m_table[i] = NULL;
+}
 
-template <typename T, typename U>
-CoarseHashMap<T,U>::~CoarseHashMap() {
+template <typename T>
+FineHashMap<T>::~FineHashMap() {
 
 	for (int i = 0; i < m_table_size; i++) {
 		HashEntry *curr = m_table[i];
@@ -35,8 +35,8 @@ CoarseHashMap<T,U>::~CoarseHashMap() {
 	delete[] m_table;
 }
 
-template <typename T, typename U>
-U CoarseHashMap<T,U>::get(T key) {
+template <typename T>
+T FineHashMap<T>::get(std::string key) {
 
 	std::hash<T> hasher;
 	int bucket = hasher(key) % m_table_size;
@@ -58,18 +58,18 @@ U CoarseHashMap<T,U>::get(T key) {
 	throw KeyNotFoundError(key.c_str());
 }
 
-template <typename T, typename U>
-float CoarseHashMap<T,U>::get_load_factor() {
+template <typename T>
+float FineHashMap<T>::get_load_factor() {
 	return 1.0 * m_size / m_table_size;
 }
 
-template <typename T, typename U>
-int CoarseHashMap<T,U>::get_size() {
+template <typename T>
+int FineHashMap<T>::get_size() {
 	return m_size;
 }
 
-template <typename T, typename U>
-void CoarseHashMap<T,U>::put(T key, U val) {
+template <typename T>
+void FineHashMap<T>::put(std::string key, T val) {
 
 	std::hash<T> hasher;
 	int bucket = hasher(key) % m_table_size;
@@ -108,8 +108,8 @@ void CoarseHashMap<T,U>::put(T key, U val) {
 
 }
 
-template <typename T, typename U>
-bool CoarseHashMap<T,U>::remove(T key) {
+template <typename T>
+bool FineHashMap<T>::remove(std::string key) {
 
 	std::hash<T> hasher;
 	int bucket = hasher(key) % m_table_size;
