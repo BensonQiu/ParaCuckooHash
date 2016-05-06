@@ -14,7 +14,6 @@ class BetterCuckooHashMap {
 
         T get(std::string key);
         void put(std::string key, T val);
-        bool remove(std::string key);
 
     private:
         struct HashEntry {

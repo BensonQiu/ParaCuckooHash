@@ -23,7 +23,6 @@ class BenchmarkOptCuckooTagHashMap {
 		void benchmark_read_only_single_bucket();
 		void benchmark_space_efficiency();
 		void run_all();
-		float m_benchmark_reads_helper(OptimisticCuckooTagHashMap<T>* my_map);
 
 	private:
 		int m_num_ops;
@@ -31,6 +30,8 @@ class BenchmarkOptCuckooTagHashMap {
 		int m_slots_per_bucket;
 		int m_num_buckets;
 		std::string* m_random_keys;
+
+		float m_benchmark_reads_helper(OptimisticCuckooTagHashMap<T>* my_map);
 
 };
 

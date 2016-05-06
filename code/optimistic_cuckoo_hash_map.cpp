@@ -47,7 +47,7 @@ T OptimisticCuckooHashMap<T>::get(std::string key) {
     uint32_t key_version_start = __sync_fetch_and_add(&m_key_version_counters[key_version_index], 0);
 
     // Look at the first bucket.
-    for (int i = (int)h1; i < (int)h1 + SLOTS_PER_BUCKET; i++) {
+    for (unsigned int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
         HashEntry* hash_entry = m_table[i];
         if (hash_entry != NULL) {
             if (key == hash_entry->key) {
@@ -62,7 +62,7 @@ T OptimisticCuckooHashMap<T>::get(std::string key) {
     }
 
     // Look at the second bucket.
-    for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++) {
+    for (unsigned int i = h2; i < h2 + SLOTS_PER_BUCKET; i++) {
         HashEntry* hash_entry = m_table[i];
         if (hash_entry != NULL) {
             if (key == hash_entry->key) {
@@ -113,7 +113,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
     while (num_iters++ < MAX_ITERS) {
 
         // Look at the first bucket.
-        for (int i = (int)h1; i < (int)h1 + SLOTS_PER_BUCKET; i++) {
+        for (unsigned int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
 
             HashEntry* hash_entry = m_table[i];
 
@@ -137,7 +137,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
         }
 
         // Look at the second bucket.
-        for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++){
+        for (unsigned int i = h2; i < h2 + SLOTS_PER_BUCKET; i++){
 
             HashEntry* hash_entry = m_table[i];
 
@@ -184,7 +184,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
 
         } else {
             // Try to evict another index so that we don't get a cycle.
-            for (int i = (int)h1; i < (int)h1 + SLOTS_PER_BUCKET; i++) {
+            for (unsigned int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
                 if (m_visited_bitmap[i] == 0) {
                     m_visited_bitmap[i] = 1;
                     path.push_back(i);
@@ -192,7 +192,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
                     goto EvictedKey;
                 }
             }
-            for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++) {
+            for (unsigned int i = h2; i < h2 + SLOTS_PER_BUCKET; i++) {
                 if (m_visited_bitmap[i] == 0) {
                     m_visited_bitmap[i] = 1;
                     path.push_back(i);
@@ -230,7 +230,7 @@ EvictedKey:
 
  SwapPathKeys:
 
-    if (path.size() >= MAX_ITERS) {
+    if ((int)path.size() >= MAX_ITERS) {
         m_write_mutex.unlock();
         return;
     }

@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-// #include "../optimistic_cuckoo_tag_hash_map.h"
 #include "../common/CycleTimer.h"
 #include "../common/errors.h"
 #include "thread_send_requests.h"

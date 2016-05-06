@@ -1,3 +1,4 @@
+#include <math.h>
 
 #define EPSILON 0.0001f
 
@@ -20,11 +21,11 @@ void* thread_send_requests(void* threadArgs) {
     }
 
     T* my_map = (T*)args->my_map;
-    if (abs(percent_reads - 1.0f) <= EPSILON) {
+    if (fabs(percent_reads - 1.0f) <= EPSILON) {
         for (int i = chunk_start; i < chunk_end; i++) {
             my_map->get(keys[i]);
         }
-    } else if (abs(percent_writes - 1.0f) <= EPSILON) {
+    } else if (fabs(percent_writes - 1.0f) <= EPSILON) {
         for (int i = chunk_start; i < chunk_end; i++) {
             my_map->put(keys[i], keys[i]);
         }

@@ -37,7 +37,6 @@ U HashMap<T,U>::get(T key) {
 	std::hash<T> hasher;
 	int bucket = hasher(key) % m_table_size;
 
-	HashEntry *prev = NULL;
 	HashEntry *curr = m_table[bucket];
 
 	while (curr != NULL) {
@@ -152,5 +151,5 @@ void HashMap<T,U>::resize() {
 	delete[] old_m_table;
 
 	double endTime = CycleTimer::currentSeconds();
-	// std::cout << "Resized table to: " << m_table_size << " in " << endTime-startTime << " seconds" << std::endl;
+	std::cout << "Resized table to: " << m_table_size << " in " << endTime-startTime << " seconds" << std::endl;
 }

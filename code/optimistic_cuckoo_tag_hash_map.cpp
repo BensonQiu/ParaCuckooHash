@@ -47,7 +47,7 @@ T OptimisticCuckooTagHashMap<T>::get(std::string key) {
     uint32_t key_version_start = __sync_fetch_and_add(&m_key_version_counters[key_version_index], 0);
 
     // Look at the first bucket.
-    for (int i = (int)h1; i < (int)h1 + SLOTS_PER_BUCKET; i++) {
+    for (unsigned int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
         HashPointer hash_pointer = m_table[i];
         if (hash_pointer.tag == tag && hash_pointer.ptr != NULL) {
             HashEntry* hash_entry = hash_pointer.ptr;
@@ -63,7 +63,7 @@ T OptimisticCuckooTagHashMap<T>::get(std::string key) {
     }
 
     // Look at the second bucket.
-    for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++) {
+    for (unsigned int i = h2; i < h2 + SLOTS_PER_BUCKET; i++) {
         // HashEntry* hash_entry = m_table[i];
         HashPointer hash_pointer = m_table[i];
         if (hash_pointer.tag == tag && hash_pointer.ptr != NULL) {
@@ -118,7 +118,7 @@ void OptimisticCuckooTagHashMap<T>::put(std::string key, T val) {
     while (num_iters++ < MAX_ITERS) {
 
         // Look at the first bucket.
-        for (int i = (int)h1; i < (int)h1 + SLOTS_PER_BUCKET; i++) {
+        for (unsigned int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
 
             // HashEntry* hash_entry = m_table[i];
             HashPointer hash_pointer = m_table[i];
@@ -142,7 +142,7 @@ void OptimisticCuckooTagHashMap<T>::put(std::string key, T val) {
         }
 
         // Look at the second bucket.
-        for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++){
+        for (unsigned int i = h2; i < h2 + SLOTS_PER_BUCKET; i++){
 
             HashPointer hash_pointer = m_table[i];
             if (hash_pointer.ptr == NULL){
@@ -184,7 +184,7 @@ void OptimisticCuckooTagHashMap<T>::put(std::string key, T val) {
             temp_hash_entry = m_table[evicted_index].ptr;
         } else {
             // Try to evict another index so that we don't get a cycle.
-            for (int i = (int)h1; i < (int)h1 + SLOTS_PER_BUCKET; i++) {
+            for (unsigned int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
                 if (m_visited_bitmap[i] == 0) {
                     m_visited_bitmap[i] = 1;
                     path.push_back(i);
@@ -192,7 +192,7 @@ void OptimisticCuckooTagHashMap<T>::put(std::string key, T val) {
                     goto EvictedKey;
                 }
             }
-            for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++) {
+            for (unsigned int i = h2; i < h2 + SLOTS_PER_BUCKET; i++) {
                 if (m_visited_bitmap[i] == 0) {
                     m_visited_bitmap[i] = 1;
                     path.push_back(i);
