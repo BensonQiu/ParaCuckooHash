@@ -47,7 +47,7 @@ T OptimisticCuckooHashMap<T>::get(std::string key) {
     uint32_t key_version_start = __sync_fetch_and_add(&m_key_version_counters[key_version_index], 0);
 
     // Look at the first bucket.
-    for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
+    for (int i = (int)h1; i < (int)h1 + SLOTS_PER_BUCKET; i++) {
         HashEntry* hash_entry = m_table[i];
         if (hash_entry != NULL) {
             if (key == hash_entry->key) {
@@ -62,7 +62,7 @@ T OptimisticCuckooHashMap<T>::get(std::string key) {
     }
 
     // Look at the second bucket.
-    for (int i = h2; i < h2 + SLOTS_PER_BUCKET; i++) {
+    for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++) {
         HashEntry* hash_entry = m_table[i];
         if (hash_entry != NULL) {
             if (key == hash_entry->key) {
@@ -113,7 +113,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
     while (num_iters++ < MAX_ITERS) {
 
         // Look at the first bucket.
-        for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
+        for (int i = (int)h1; i < (int)h1 + SLOTS_PER_BUCKET; i++) {
 
             HashEntry* hash_entry = m_table[i];
 
@@ -137,7 +137,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
         }
 
         // Look at the second bucket.
-        for (int i = h2; i < h2 + SLOTS_PER_BUCKET; i++){
+        for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++){
 
             HashEntry* hash_entry = m_table[i];
 
@@ -184,7 +184,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
 
         } else {
             // Try to evict another index so that we don't get a cycle.
-            for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
+            for (int i = (int)h1; i < (int)h1 + SLOTS_PER_BUCKET; i++) {
                 if (m_visited_bitmap[i] == 0) {
                     m_visited_bitmap[i] = 1;
                     path.push_back(i);
@@ -192,7 +192,7 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
                     goto EvictedKey;
                 }
             }
-            for (int i = h2; i < h2 + SLOTS_PER_BUCKET; i++) {
+            for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++) {
                 if (m_visited_bitmap[i] == 0) {
                     m_visited_bitmap[i] = 1;
                     path.push_back(i);
@@ -246,18 +246,6 @@ EvictedKey:
         return;
     }
 
-    // DEBUGGING
-    // bool contains_four = false;
-    // std::vector<int>::reverse_iterator key_version_iterator = key_version_array.rbegin();
-    // std::vector<int>::reverse_iterator path_iterator = path.rbegin();
-    // for (; path_iterator != path.rend(); path_iterator++) {
-    //     int value = *path_iterator;
-    //     if (value.compare("4") == 0)
-    //         contains_four = true;
-    // }
-
-
-
     // Case 2: Evictions needed to insert key.
     std::vector<int>::reverse_iterator key_version_iterator = key_version_array.rbegin();
     std::vector<int>::reverse_iterator path_iterator = path.rbegin();
@@ -279,7 +267,6 @@ EvictedKey:
         to_hash_entry->key = from_hash_entry->key;
         to_hash_entry->val = from_hash_entry->val;
         m_table[to_index] = to_hash_entry;
-
         __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
 
         to_index = from_index;

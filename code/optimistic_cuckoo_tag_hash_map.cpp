@@ -19,8 +19,6 @@ OptimisticCuckooTagHashMap<T>::OptimisticCuckooTagHashMap(int num_buckets) {
 template <typename T>
 OptimisticCuckooTagHashMap<T>::~OptimisticCuckooTagHashMap() {
 
-    // for (int i = 0; i < m_num_buckets * SLOTS_PER_BUCKET; i++)
-        // delete m_table[i];
     delete[] m_table;
     delete[] m_key_version_counters;
 }
@@ -49,8 +47,7 @@ T OptimisticCuckooTagHashMap<T>::get(std::string key) {
     uint32_t key_version_start = __sync_fetch_and_add(&m_key_version_counters[key_version_index], 0);
 
     // Look at the first bucket.
-    for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
-        // HashEntry* hash_entry = m_table[i];
+    for (int i = (int)h1; i < (int)h1 + SLOTS_PER_BUCKET; i++) {
         HashPointer hash_pointer = m_table[i];
         if (hash_pointer.tag == tag && hash_pointer.ptr != NULL) {
             HashEntry* hash_entry = hash_pointer.ptr;
@@ -66,7 +63,7 @@ T OptimisticCuckooTagHashMap<T>::get(std::string key) {
     }
 
     // Look at the second bucket.
-    for (int i = h2; i < h2 + SLOTS_PER_BUCKET; i++) {
+    for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++) {
         // HashEntry* hash_entry = m_table[i];
         HashPointer hash_pointer = m_table[i];
         if (hash_pointer.tag == tag && hash_pointer.ptr != NULL) {
@@ -121,7 +118,7 @@ void OptimisticCuckooTagHashMap<T>::put(std::string key, T val) {
     while (num_iters++ < MAX_ITERS) {
 
         // Look at the first bucket.
-        for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
+        for (int i = (int)h1; i < (int)h1 + SLOTS_PER_BUCKET; i++) {
 
             // HashEntry* hash_entry = m_table[i];
             HashPointer hash_pointer = m_table[i];
@@ -145,9 +142,8 @@ void OptimisticCuckooTagHashMap<T>::put(std::string key, T val) {
         }
 
         // Look at the second bucket.
-        for (int i = h2; i < h2 + SLOTS_PER_BUCKET; i++){
+        for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++){
 
-            // HashEntry* hash_entry = m_table[i];
             HashPointer hash_pointer = m_table[i];
             if (hash_pointer.ptr == NULL){
                 // Found an empty bucket slot for the current key.
@@ -176,12 +172,8 @@ void OptimisticCuckooTagHashMap<T>::put(std::string key, T val) {
         int evicted_index;
         if (0 <= index && index < SLOTS_PER_BUCKET) {
             evicted_index = h1 + index;
-            // path.push_back(h1 + index);
-            // temp_hash_entry = m_table[h1 + index];
         } else {
             evicted_index = h2 + index - SLOTS_PER_BUCKET;
-            // path.push_back(h2 + index - SLOTS_PER_BUCKET);
-            // temp_hash_entry = m_table[h2 + index - SLOTS_PER_BUCKET];
         }
 
         HashEntry* temp_hash_entry;
@@ -192,7 +184,7 @@ void OptimisticCuckooTagHashMap<T>::put(std::string key, T val) {
             temp_hash_entry = m_table[evicted_index].ptr;
         } else {
             // Try to evict another index so that we don't get a cycle.
-            for (int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
+            for (int i = (int)h1; i < (int)h1 + SLOTS_PER_BUCKET; i++) {
                 if (m_visited_bitmap[i] == 0) {
                     m_visited_bitmap[i] = 1;
                     path.push_back(i);
@@ -200,7 +192,7 @@ void OptimisticCuckooTagHashMap<T>::put(std::string key, T val) {
                     goto EvictedKey;
                 }
             }
-            for (int i = h2; i < h2 + SLOTS_PER_BUCKET; i++) {
+            for (int i = (int)h2; i < (int)h2 + SLOTS_PER_BUCKET; i++) {
                 if (m_visited_bitmap[i] == 0) {
                     m_visited_bitmap[i] = 1;
                     path.push_back(i);
@@ -238,7 +230,7 @@ EvictedKey:
 
  SwapPathKeys:
 
-    if (path.size() >= MAX_ITERS) {
+    if ((int)path.size() >= MAX_ITERS) {
         m_write_mutex.unlock();
         return;
     }
@@ -260,17 +252,6 @@ EvictedKey:
         return;
     }
 
-    // DEBUGGING
-    // bool contains_four = false;
-    // std::vector<int>::reverse_iterator key_version_iterator = key_version_array.rbegin();
-    // std::vector<int>::reverse_iterator path_iterator = path.rbegin();
-    // for (; path_iterator != path.rend(); path_iterator++) {
-    //     int value = *path_iterator;
-    //     if (value.compare("4") == 0)
-    //         contains_four = true;
-    // }
-
-
     // Case 2: Evictions needed to insert key.
     std::vector<int>::reverse_iterator key_version_iterator = key_version_array.rbegin();
     std::vector<int>::reverse_iterator path_iterator = path.rbegin();
@@ -287,12 +268,6 @@ EvictedKey:
         m_visited_bitmap[from_index] = 0;
 
         __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
-        // HashEntry* from_hash_entry = m_table[from_index];
-        // HashEntry* to_hash_entry = new HashEntry();
-        // to_hash_entry->key = from_hash_entry->key;
-        // to_hash_entry->val = from_hash_entry->val;
-        // m_table[to_index] = to_hash_entry;
-
         HashPointer from_hash_pointer = m_table[from_index];
         HashPointer* to_hash_pointer = new HashPointer();
         to_hash_pointer->tag = from_hash_pointer.tag;
@@ -300,7 +275,6 @@ EvictedKey:
         to_hash_pointer->ptr->key = from_hash_pointer.ptr->key;
         to_hash_pointer->ptr->val = from_hash_pointer.ptr->val;
         m_table[to_index] = *to_hash_pointer;
-
         __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
 
         to_index = from_index;
@@ -315,9 +289,6 @@ EvictedKey:
     hash_pointer->tag = tag;
     hash_pointer->ptr->key = key;
     hash_pointer->ptr->val = val;
-    // &m_table[first_index]->tag = tag;
-    // m_table[first_index]->val = val;
-
     __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
 
     m_write_mutex.unlock();
