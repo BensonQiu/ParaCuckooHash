@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>ParaCuckooHash: Concurrent, In-Memory HashMap</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/half-slider.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">ParaCuckooHash</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li>
+                        <a href="proposal.html">Project Proposal</a>
+                    </li>
+                    <li>
+                        <a href="checkpoint.html">Checkpoint</a>
+                    </li>
+                    <li>
+                        <a href="index.html">Final Writeup</a>
+                    </li>
+                    <li>
+                        <a href="http://www.github.com/BensonQiu/15418FinalProject " target="_blank">Source Code</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+
+    <br><br><br><br>
+
+    <!-- Page Content -->
+    <div class="container" id="proposal">
+
+        <div class="row">
+            <div class="col-lg-12">
+                <h1><center>Project Proposal</center></h1>
+                <h4><center>Team Members: Benson Qiu and Tommy Hung</center><h4>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="row">
+            <div class="col-lg-8">
+
+                <h2>Summary</h2>
+                <p>We are going to implement and benchmark several algorithms for a high performance, concurrent, in-memory hashmap. Our code will be tested on an Intel Xeon Phi coprocessor (Latedays cluster) and an Intel Xeon Processor E5-2680 (Unix-6 Machine).</p>
+
+                <hr>
+
+                <h2>Background</h2>
+                <p>Fan et. al<sup>1</sup> describes a set of algorithmic improvements to Memcached, an in-memory key-value store intended for use in speeding up dynamic web applications by alleviating database load. We plan to use several ideas from the paper for our hashmap implementation<sup>2</sup>.</p>
+
+                <figure><center>
+                    <img src="img/separate_chaining.png" alt="Separate Chaining" style="width:35%;height:35%;">
+                    <figcaption><b>Figure 1.</b> Separate Chaining.</figcaption>
+                </figure></center>
+
+                <br>
+
+                <p>Chained HashMaps (Figure 1) contain an array of buckets, where each bucket is a pointer to a linked list chain. Separate chaining is relatively <b>easy to implement</b> and provides expected constant-time insertions and lookups. The "next" pointers for each node in the linked list have <b>poor cache locality</b>, and using a pointer for each key-value entry requires <b>additional memory overhead</b>. Separate chaining is the algorithm used in Memcached.</p>
+
+                <figure><center>
+                    <img src="img/cuckoo.png" alt="Cuckoo" style="width:35%;height:35%;">
+                    <figcaption><b>Figure 2.</b> Cuckoo Hashing.</figcaption>
+                </figure></center>
+
+                <br>
+
+                <p>Cuckoo HashMaps hash a key to two possible buckets. In Figure 2, each bucket is 2-way set associative, so a key can be inserted in one of four possible slots across two buckets. If all slots are full, a key will be randomly evicted and rehashed. Cuckoo HashMaps can be represented as a contiguous array of pointers to a HashEntry struct of key-value pairs. Compared to separate chaining, cuckoo hashing benefits from <b>better cache locality</b>, is more <b>memory efficient</b> because it contains no pointers, and has worst-case constant-time lookups.</p>
+
+                <figure><center>
+                    <img src="img/optimistic_concurrent.png" alt="Optimistic Concurrent" style="width:45%;height:45%;">
+                    <figcaption><b>Figure 3.</b> Concurrent Cuckoo Hashing With Optimizations.</figcaption>
+                </figure></center>
+
+                <br>
+
+                <p>Optimistic Concurrent Cuckoo HashMaps (Figure 3) have several optimizations for read-heavy workloads built onto the basic cuckoo hashing scheme. Each bucket is 4-way set associative, with each slot containing a HashPointer struct that has a tag and a pointer to the HashEntry. After generating two hash values for a key, we apply another hash to the hash values to determine the tag value. When reading or writing keys, we only make a pointer dereference if the tag values match. A HashPointer struct requires 16 bytes of memory on a 64-bit system, so we make the buckets 4-way set associative to achieve <b>high cache locality</b> on a 64-byte cache line. A key-version counter array is used to provide <b>concurrent lock free reads</b>. With 4-way set associative buckets, we hope to achieve <b>90% space efficiency</b>.
+
+                <hr>
+
+                <h2>Challenge</h2>
+                <p>Using the C++ std::unordered_map as a baseline, we will iteratively implement several hashmap algorithms, with a focus on maximizing concurrent performance under different read/write workloads. We will also interested in measuring memory efficiency of our implementations.</p>
+
+                <p>Our final implementation will hopefully parallelize well to concurrent, read-heavy workloads and be much more space efficient than a basic separate chaining implementation. The optimistic concurrent cuckoo hashmap will use atomic hardware instructions for lock-free reads, and we will choose a data structure that maximizes cache locality and space efficiency.</p>
+
+                <p>Concurrently accessing and modifying a shared data structure is inherently challenging and prone to concurrency issues such as deadlock and race condtions. We will also design a good test suite that accurately profiles how different hashmap implementations perform under various workloads. The throughput depends not only on percentage of reads and writes, but also on how the concurrent requests are interleaved. Simultaneous reads and writes with keys that hash to the same buckets will naturally generate more contention. We hope to capture this in our test cases.</p>
+
+                <hr>
+
+                <h2>Resources</h2>
+                <p>We will be using Intel Xeon Processor E5-2680 from the Unix machines and the Intel Xeon Phi coprocessor from the Latedays cluster.</p>
+
+                <hr>
+
+                <h2>Goals and Deliverables</h2>
+
+                <h4>Things we Plan to Implement:</h4>
+                <ol>
+                    <li>Sequential hashmap using separate chaining</li>
+                    <li>Fine grained parallel implementation of (1) using chain-level locks.</li>
+                    <li>Coarse grained parallel implementation using cuckoo hashing.</li>
+                    <li>Fine grained parallel implementation using optimistic concurrent cuckoo hashing.</li>
+                </ol>
+
+                <hr>
+
+                <h4>Hope to Achieve:</h4>
+                <ol>
+                    <li>Measure memory efficiency of our various key-value store implementations.</li>
+                    <li>Distribute the key-value store across multiple nodes and measure total throughput.</li>
+                </ol>
+
+                <hr>
+
+                <h4>Performance Goals:</h4>
+                <p>We plan to create speedup graphs for all of our implementations. For the implementations involving cuckoo hashing and optimistic concurrent cuckoo hashing, we will also see how speedup varies as we change the workload (percentage of read/write requests). By the time we reach our final implementation with optimistic cuckoo hashing, we hope to achieve a 10x speedup over the sequential version with 97.5% read requests and 2.5% write requests on the Latedays cluster. This is based on metrics from Fan et. al.<sup>1</sup> The system that they used is similar to the Latedays cluster.</p>
+
+                <hr>
+
+                <h2>Platform</h2>
+                <p>Our project will be implemented in C++ and should work on a variety of platforms. We will use the Xeon Phi on the Latedays cluster for final testing because it provides an isolated and consistent testing environment. Also, the Xeon Phi is one of the more powerful resources we have access to, allowing us to determine the maximum throughput that we can achieve.</p>
+
+                <hr>
+
+                <h2>Schedule</h2>
+
+                <table border="1" style="width:100%">
+                  <tr>
+                    <td><b>&nbsp;Week</b></td>
+                    <td><b>&nbsp;Goal</b></td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;4/3 - 4/9</td>
+                    <td>&nbsp;Read literature; implement sequential key-value store</td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;4/10 - 4/16</td>
+                    <td>&nbsp;Implement coarse and fine grained key-value store</td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;4/17 - 4/23</td>
+                    <td>&nbsp;Implement cuckoo hashing</td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;4/24 - 4/30</td>
+                    <td>&nbsp;Begin optimistic cuckoo hashing implementation</td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;5/1 - 5/9</td>
+                    <td>&nbsp;Finish optimistic cuckoo hashing implementation</td>
+                  </tr>
+                </table>
+
+                <hr>
+
+                <h2>References</h2>
+                <sup>1</sup><a href="http://www.cs.cmu.edu/~dga/papers/memc3-nsdi2013.pdf">http://www.cs.cmu.edu/~dga/papers/memc3-nsdi2013.pdf</a><br>
+                <sup>2</sup><a href="https://memcached.org/">https://memcached.org</a><br>
+            </div>
+        </div>
+
+        <hr>
+
+    </div>
+
+    <!-- /.container -->
+
+    <!-- jQuery -->
+    <script src"js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- Script to Activate the Carousel -->
+    <script>
+    $('.carousel').carousel({
+        interval: 5000 //changes the speed
+    })
+    </script>
+
+</body>
+
+</html>

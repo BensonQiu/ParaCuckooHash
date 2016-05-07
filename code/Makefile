@@ -1,6 +1,6 @@
 CC=g++
 
-CFLAGS=-std=c++11 -Werror -Wall -Wextra -lpthread
+CFLAGS=-std=c++11 -Werror -Wall -Wextra -lpthread -lboost_system -lboost_thread
 
 TARGET=benchmark/main
 
