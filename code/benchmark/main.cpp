@@ -23,8 +23,8 @@
 //#define NUM_BUCKETS 10 * 1000 * 1000
 //#define NUM_OPS 20 * 1000 * 1000
 
-#define NUM_BUCKETS 5* 1000 * 1000
-#define NUM_OPS 10 * 1000* 1000
+#define NUM_BUCKETS 2.5 * 1000 * 1000
+#define NUM_OPS 5 * 1000* 1000
 
 
 int main() {
@@ -81,6 +81,71 @@ int main() {
 
     }
     */
+
+    for (int i = 0; i < 3; i++) {
+      OptimisticCuckooTagHashMap<std::string> my_map(0.7 * NUM_BUCKETS);
+
+        // PUT
+
+      /*
+        start_time = CycleTimer::currentSeconds();
+        for (int j = 0; j < NUM_OPS; j++) {
+            my_map.put(keys[j], "value" + keys[j]);
+        }
+        end_time = CycleTimer::currentSeconds();
+        best_put_time = std::min(best_put_time, end_time-start_time);
+      */
+
+
+      pthread_t workers[NUM_THREADS];
+      WorkerArgs args[NUM_THREADS];
+
+      start_time = CycleTimer::currentSeconds();
+
+        for (int j = 0; j < NUM_THREADS; j++) {
+          args[j].my_map = (void*)&my_map;
+          args[j].thread_id = (long int)j;
+          args[j].num_threads = NUM_THREADS;
+          args[j].num_ops = NUM_OPS;
+          args[j].percent_reads = 0.0f;
+          args[j].keys = keys;
+        }
+        for (int j = 0; j < NUM_THREADS; j++) {
+            pthread_create(&workers[j], NULL, thread_send_requests<OptimisticCuckooTagHashMap<std::string>>, &args[j]);
+        }
+        for (int j = 0; j < NUM_THREADS; j++) {
+            pthread_join(workers[j], NULL);
+        }
+
+        end_time = CycleTimer::currentSeconds();
+        best_put_time = std::min(best_put_time, end_time-start_time);
+
+        // GET
+
+
+        start_time = CycleTimer::currentSeconds();
+        for (int j = 0; j < NUM_OPS; j++) {
+            my_map.get(keys[j]);
+        }
+        end_time = CycleTimer::currentSeconds();
+        best_get_time = std::min(best_get_time, end_time-start_time);
+
+
+
+        // for (int j = 0; j < NUM_OPS; j++) {
+        //     my_map.get(std::to_string(j));
+        //     // my_map.get(keys[j]);
+        // }
+
+    }
+
+
+    std::cout << "Normal Lock Cuckoo put: " << best_put_time << std::endl;
+    std::cout << "Normal Lock Cuckoo get: " << best_get_time << std::endl;
+
+
+    best_put_time = 1e30;
+    best_get_time = 1e30;
 
     for (int i = 0; i < 3; i++) {
       OptimisticCuckooTagBetterLockHashMap<std::string> my_map(0.55 * NUM_BUCKETS);
@@ -140,8 +205,8 @@ int main() {
     }
 
 
-    std::cout << "Cuckoo put: " << best_put_time << std::endl;
-    std::cout << "Cuckoo get: " << best_get_time << std::endl;
+    std::cout << "Later Lock Cuckoo put: " << best_put_time << std::endl;
+    std::cout << "Later Lock Cuckoo get: " << best_get_time << std::endl;
 
     return 0;
 }

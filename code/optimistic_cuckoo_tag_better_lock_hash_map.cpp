@@ -349,7 +349,7 @@ EvictedKey:
       int key_version_entry = *key_version_entries_iterator++;
       int key_version_index = *key_version_iterator_2;
 
-      if (m_key_version_counters[key_version_index] != key_version_entry){
+      if ((int)m_key_version_counters[key_version_index] != key_version_entry){
         //std::cout << "Path modified, aborting for key: " << key << std::endl;
         //unwind the paths that you've seen
         std::vector<int>::reverse_iterator path_iterator = path.rbegin();

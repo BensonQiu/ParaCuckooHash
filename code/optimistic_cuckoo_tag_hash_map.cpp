@@ -200,6 +200,7 @@ void OptimisticCuckooTagHashMap<T>::put(std::string key, T val) {
                     goto EvictedKey;
                 }
             }
+            std::cout << "Cycle case: " << key << std::endl;
             m_write_mutex.unlock();
             return;
         }

@@ -26,7 +26,9 @@ void* thread_send_requests(void* threadArgs) {
             my_map->get(keys[i]);
         }
     } else if (fabs(percent_writes - 1.0f) <= EPSILON) {
-        for (int i = chunk_start; i < chunk_end; i++) {
+      //std::cout << "chunk_start: " << chunk_start << " chunk_end: " << chunk_end << std::endl;
+      for (int i = chunk_start; i < chunk_end; i++) {
+          //std::cout << "Trying to put " << keys[i] << std::endl;
             my_map->put(keys[i], keys[i]);
         }
     } else {
@@ -35,4 +37,3 @@ void* thread_send_requests(void* threadArgs) {
 
     return NULL;
 }
-
