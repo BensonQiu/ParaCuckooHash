@@ -70,9 +70,9 @@ void BenchmarkFineHashMap<T>::benchmark_read_only() {
 	    }
         end_time = CycleTimer::currentSeconds();
         best_time = std::min(best_time, end_time-start_time);
-        std::cout << "\t" << end_time-start_time << std::endl;
     }
-    std::cout << "\t" << "Read-Only (" << NUM_READERS << " Reader Threads): " << best_time << std::endl;
+    std::cout << "\t" << "Read-Only (" << NUM_READERS << " Reader Threads): "
+              << m_num_ops / best_time / (1000 * 1000) << std::endl;
 }
 
 template <typename T>
@@ -127,7 +127,8 @@ void BenchmarkFineHashMap<T>::benchmark_read_only_single_bucket() {
 	        end_time = CycleTimer::currentSeconds();
 	        best_time = std::min(best_time, end_time-start_time);
 	    }
-	    std::cout << "\t" << "Read-Only Single Bucket (" << num_readers << " Reader Threads): " << best_time << std::endl;
+	    std::cout << "\t" << "Read-Only Single Bucket (" << num_readers << " Reader Threads): "
+	              << m_num_ops / best_time / (1000 * 1000) << std::endl;
 	}
 }
 

@@ -30,6 +30,8 @@ BenchmarkOptCuckooHashMap<T>::~BenchmarkOptCuckooHashMap() {
 template <typename T>
 void BenchmarkOptCuckooHashMap<T>::benchmark_random_interleaved_read_write() {
 
+	std::cout << "TODO: Interleaved Reads / Writes" << std::endl;
+
     OptimisticCuckooHashMap<T> my_map(m_num_buckets);
     try {
 	    my_map.get("hello");
@@ -42,18 +44,17 @@ void BenchmarkOptCuckooHashMap<T>::benchmark_read_only() {
     OptimisticCuckooHashMap<T> my_map(m_num_buckets);
     double best_time = m_benchmark_reads_helper(&my_map);
 
-    std::cout << "\t" << "Read-Only (" << NUM_READERS << " Reader Threads): " << best_time << std::endl;
+    std::cout << "\t" << "Read-Only (" << NUM_READERS << " Reader Threads): "
+              << m_num_ops / best_time / (1000 * 1000) << std::endl;
 }
 
-// TODO: Write with multiple threads if we implement optimistic locking.
 template <typename T>
 void BenchmarkOptCuckooHashMap<T>::benchmark_write_only() {
 
 	double start_time, end_time, best_time;
 
-    // Take the best time of three runs.
     best_time = 1e30;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 10; i++) {
 	    OptimisticCuckooHashMap<T> my_map(m_num_buckets);
 
         start_time = CycleTimer::currentSeconds();
@@ -63,7 +64,7 @@ void BenchmarkOptCuckooHashMap<T>::benchmark_write_only() {
         end_time = CycleTimer::currentSeconds();
         best_time = std::min(best_time, end_time-start_time);
     }
-    std::cout << "\t" << "Write-Only: " << best_time << std::endl;
+    std::cout << "\t" << "Write-Only: " << m_num_ops / best_time / (1000 * 1000) << std::endl;
 }
 
 template <typename T>
@@ -98,9 +99,8 @@ void BenchmarkOptCuckooHashMap<T>::benchmark_read_only_single_bucket() {
 	        args[i].keys = identical_keys;
 	    }
 
-	    // Take the best time of three runs.
 	    best_time = 1e30;
-	    for (int i = 0; i < 3; i++) {
+	    for (int i = 0; i < 10; i++) {
 	        start_time = CycleTimer::currentSeconds();
 		    for (int j = 0; j < num_readers; j++) {
 		        pthread_create(&workers[j], NULL,
@@ -112,7 +112,8 @@ void BenchmarkOptCuckooHashMap<T>::benchmark_read_only_single_bucket() {
 	        end_time = CycleTimer::currentSeconds();
 	        best_time = std::min(best_time, end_time-start_time);
 	    }
-	    std::cout << "\t" << "Read-Only Single Bucket (" << num_readers << " Reader Threads): " << best_time << std::endl;
+	    std::cout << "\t" << "Read-Only Single Bucket (" << num_readers << " Reader Threads): "
+	              << m_num_ops / best_time / (1000 * 1000) << std::endl;
 	}
 }
 
@@ -125,8 +126,8 @@ void BenchmarkOptCuckooHashMap<T>::benchmark_space_efficiency() {
 	    OptimisticCuckooHashMap<T> my_map(num_buckets);
 		double best_time = m_benchmark_reads_helper(&my_map);
 
-	    std::cout << "\t" << 100*space_efficiency << "% Space Efficiency ("
-	              << NUM_READERS << " Reader Threads): " << best_time << std::endl;
+	    std::cout << "\t" << 100*space_efficiency << "% Space Efficiency (" << NUM_READERS << " Reader Threads): "
+	              << m_num_ops / best_time / (1000 * 1000) << std::endl;
 	}
 }
 
@@ -154,9 +155,8 @@ double BenchmarkOptCuckooHashMap<T>::m_benchmark_reads_helper(
 
 	double start_time, end_time, best_time;
 
-    // Take the best of 3 runs.
     best_time = 1e30;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 10; i++) {
         start_time = CycleTimer::currentSeconds();
 	    for (int j = 0; j < NUM_READERS; j++) {
 	        pthread_create(&workers[j], NULL,
