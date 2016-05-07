@@ -14,6 +14,7 @@
 #include "benchmark_opt_cuckoo.h"
 #include "benchmark_opt_cuckoo_tag.h"
 #include "benchmark_opt_cuckoo_tag_locklater.h"
+#include "benchmark_hash.h"
 
 #include "../optimistic_cuckoo_tag_better_lock_hash_map.h"
 
@@ -25,7 +26,7 @@
 //#define NUM_OPS 20 * 1000 * 1000
 
 #define NUM_BUCKETS 1 * 1000 * 1000
-#define NUM_OPS 2 * 1000* 1000
+#define NUM_OPS 1 * 1000* 1000
 
 
 int main() {
@@ -49,6 +50,9 @@ int main() {
 
     // BenchmarkOptCuckooTagLockLaterHashMap<std::string> benchmark_opt_cuckoo_tag_ll(NUM_OPS);
     // benchmark_opt_cuckoo_tag_ll.run_all();
+
+    BenchmarkHash benchmark_hash(NUM_OPS);
+    benchmark_hash.run_all();
 
     std::string* keys = new std::string[NUM_OPS];
     for (int i = 0 ; i < NUM_OPS; i++)
@@ -102,8 +106,8 @@ int main() {
         }
 
 
-        std::cout << "Cuckoo put (" << nt << " Threads): " << best_put_time << std::endl;
-        // std::cout << "Cuckoo get () " << best_get_time << std::endl;
+        std::cout << "Cuckoo put (" << nt << " Threads): " << m_num_ops / best_put_time / (1000 * 1000) << std::endl;
+        // std::cout << "Cuckoo get () " << m_num_ops / best_get_time / (1000 * 1000) << std::endl;
     }
 
     return 0;

@@ -1,7 +1,6 @@
 #include <iostream>
 #include <unordered_map>
 #include <stdlib.h>
-#include <pthread.h>
 
 #include "../common/CycleTimer.h"
 
