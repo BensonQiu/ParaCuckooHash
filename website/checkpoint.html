@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Concurrent, In-Memory Key-Value Store</title>
+    <title>ParaCuckooHash: Concurrent, In-Memory HashMap</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -39,16 +39,22 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="#">Key-Value Store</a>
+                <a class="navbar-brand" href="#">ParaCuckooHash</a>
             </div>
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
                     <li>
-                        <a href="index.html">Project Proposal</a>
+                        <a href="proposal.html">Project Proposal</a>
                     </li>
                     <li>
                         <a href="checkpoint.html">Checkpoint</a>
+                    </li>
+                    <li>
+                        <a href="index.html">Final Writeup</a>
+                    </li>
+                    <li>
+                        <a href="http://www.github.com/BensonQiu/15418FinalProject " target="_blank">Source Code</a>
                     </li>
                 </ul>
             </div>
@@ -76,10 +82,6 @@
 
         <div class="row">
             <div class="col-lg-8">
-                <h1>Project Checkpoint</h1>
-
-                <hr>
-
                 <h2>Updated Schedule</h2>
 
                 <table border="1" style="width:100%">
@@ -148,7 +150,7 @@
                 <br>
                 <p>We have included preliminary results of our hashmap implementations above, running our test suite on an Intel Xeon E5645 CPU. As expected, the parallel bucket-level hashmap is faster than sequential implementations. One perhaps surprising result is that our optimistic concurrent cuckoo hashmap insertion is even slower than the sequential cuckoo hashmap. This is because the optimistic concurrent cuckoo hashmap is optimized for a read-heavy workload. We sacrifice insertion throughput but improve read throughput by minimizing the chances of concurrent read-write conflicts.</p>
 
-                <p>We have managed to implement most of what we originally planned to achieve by the end of the semester. However, to be fair, we believe that for versions (4) and (5), there are some performance bugs or implementation details that we may be missing that is preventing us from achieving even greater speedup. Specifically, we have not been able to achieve speedup by adding tags in (4) to improve cache locality and reduce pointer dereferences.</p>
+                <p>We have managed to implement most of what we originally planned to achieve by the end of the semester. However, to be fair, we believe that for versions (4) and (5), there are some performance bugs or implementation details that we may be missing that is preventing us from achieving even greater speedup. Specifically, we have not been able to achieve speedup by adding tags in (4) to improve cache locality and reduce pointer dereferences. (UPDATE: We have solved this issue!)</p>
 
                 <hr>
 

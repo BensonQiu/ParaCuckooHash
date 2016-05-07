@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Concurrent, In-Memory HashMap</title>
+    <title>ParaCuckooHash: Concurrent, In-Memory HashMap</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -39,16 +39,22 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="#">Key-Value Store</a>
+                <a class="navbar-brand" href="#">ParaCuckooHash</a>
             </div>
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
                     <li>
-                        <a href="index.html">Project Proposal</a>
+                        <a href="proposal.html">Project Proposal</a>
                     </li>
                     <li>
                         <a href="checkpoint.html">Checkpoint</a>
+                    </li>
+                    <li>
+                        <a href="index.html">Final Writeup</a>
+                    </li>
+                    <li>
+                        <a href="http://www.github.com/BensonQiu/15418FinalProject " target="_blank">Source Code</a>
                     </li>
                 </ul>
             </div>
@@ -64,131 +70,139 @@
 
         <div class="row">
             <div class="col-lg-12">
-                <h1><center>Project Proposal</center></h1>
+                <h1><center>Final Writeup</center></h1>
                 <h4><center>Team Members: Benson Qiu and Tommy Hung</center><h4>
             </div>
         </div>
 
         <hr>
 
+    <!-- Page Content -->
+    <div class="container" id="checkpoint">
+
         <div class="row">
             <div class="col-lg-8">
-
                 <h2>Summary</h2>
-                <p>We are going to implement and benchmark several algorithms for a high performance, concurrent, in-memory hashmap. Our code will be tested on an Intel Xeon Phi coprocessor (Latedays cluster) and an Intel Xeon Processor E5-2680 (Unix-6 Machine).</p>
+
+                <p>We implemented a parallel hashmap using concurrent cuckoo hashing optimizations for read-heavy workloads. Based on our benchmarks, our fastest implementation was able to achieve a <b>16.8x speedup for concurrent reads</b> over a <code>C++11 std::unordered_map</code> using the Intel Xeon CPU E5-2680.</p>
 
                 <hr>
 
                 <h2>Background</h2>
-                <p>Fan et. al<sup>1</sup> describes a set of algorithmic improvements to Memcached, an in-memory key-value store intended for use in speeding up dynamic web applications by alleviating database load. We plan to use several ideas from the paper for our hashmap implementation<sup>2</sup>.</p>
-
-                <figure><center>
-                    <img src="img/separate_chaining.png" alt="Separate Chaining" style="width:35%;height:35%;">
-                    <figcaption><b>Figure 1.</b> Separate Chaining.</figcaption>
-                </figure></center>
-
-                <br>
-
-                <p>Chained HashMaps (Figure 1) contain an array of buckets, where each bucket is a pointer to a linked list chain. Separate chaining is relatively <b>easy to implement</b> and provides expected constant-time insertions and lookups. The "next" pointers for each node in the linked list have <b>poor cache locality</b>, and using a pointer for each key-value entry requires <b>additional memory overhead</b>. Separate chaining is the algorithm used in Memcached.</p>
 
                 <figure><center>
                     <img src="img/cuckoo.png" alt="Cuckoo" style="width:35%;height:35%;">
-                    <figcaption><b>Figure 2.</b> Cuckoo Hashing.</figcaption>
+                    <figcaption><b>Figure 1.</b> Cuckoo Hashing.</figcaption>
                 </figure></center>
-
                 <br>
+                <p>Cuckoo hashing is a scheme for resolving hash collisions in a hashmap. The idea is use two hash functions instead of one, so that there are two buckets for the key to reside in. If all slots in both buckets are full, the key is inserted at a random slot within the two buckets, and the existing key at the randomly chosen slot is evicted and reinserted at another bucket. <b>Lookups are guaranteed to be constant time</b> because we need to search at most <code>2*NUM_SLOTS_PER_BUCKET</code> slots for a key.</p>
 
-                <p>Cuckoo HashMaps hash a key to two possible buckets. In Figure 2, each bucket is 2-way set associative, so a key can be inserted in one of four possible slots across two buckets. If all slots are full, a key will be randomly evicted and rehashed. Cuckoo HashMaps can be represented as a contiguous array of pointers to a HashEntry struct of key-value pairs. Compared to separate chaining, cuckoo hashing benefits from <b>better cache locality</b>, is more <b>memory efficient</b> because it contains no pointers, and has worst-case constant-time lookups.</p>
+                <hr>
+
+                <h2>Algorithm / Approach</h2>
 
                 <figure><center>
                     <img src="img/optimistic_concurrent.png" alt="Optimistic Concurrent" style="width:45%;height:45%;">
-                    <figcaption><b>Figure 3.</b> Concurrent Cuckoo Hashing With Optimizations.</figcaption>
+                    <figcaption><b>Figure 2.</b> Concurrent Cuckoo Hashing With Optimizations.</figcaption>
+                </figure></center>
+                <br>
+
+<pre><code>// Data structures used for optimistic concurrent cuckoo hashing
+
+HashPointer *m_table;
+
+struct HashPointer {
+    unsigned char tag;
+    HashEntry* ptr;
+};
+
+struct HashEntry {
+    std::string key;
+    T val;
+};
+</code></pre>
+                <br>
+                <p>For our project, we implemented several improvements to basic cuckoo hashing scheme, with an emphasis on maximizing concurrent read performance for read-heavy workloads. Each bucket in the hashmap has four slots, where each slot contains a HashPointer struct. The HashPointer struct contains a tag and a pointer to a HashEntry struct that actually contains the key-value pair. (<i>Note: The algorithm described below focuses on a multiple reader, single writer workload. We did further optimizations to handle a multiple writer case.</i>)</p>
+
+                <br>
+
+                <p><b>Lock Striping: </b>We maintain a key-version counter for each bucket. Whenever an insertion thread is about to displace a key, it atomically increments the relevant counter using <code>__sync_fetch_and_add</code>. The insertion thread increments the counter again after it is done modifying the key, thus incrementing a counter by 2 for each displacement. A lookup thread snapshots its corresponding key-version counter twice, once at the beginning of the process and again when it is done reading both buckets. If at either point the key-version counter is odd, the lookup thread knows that the key is being modified so it has to wait and retry. <b>Lock striping allows for concurrent, lock-free reads.</b></p>
+
+                <br>
+
+                <p><b>Tag-Based Lookup/Insertion: </b>When a key is inserted into the hashmap, the key is hashed to a 1 byte tag value that is stored in the HashPointer struct. When performing a key lookup, we apply a tag hash to the key and only dereference the HashPointer's <code>HashEntry* ptr</code> field if the tags match (i.e. <code>tag_hash(current_key) == hash_pointer.tag</code>). The key ideas behind using tags is to <b>reduce pointer dereferences</b> and to <b>maximize cache locality</b>. We only make a pointer dereference if we find matching tags, which will occur 1/256 times with a 8 bit tag. The HashPointer struct requires only 16 bytes of memory, so we can store all 4 slots of a bucket on a 64-byte cache line, thus maximizing cache locality.</p>
+
+                <br>
+
+                <p><b>Separate Path Discovery and Path Eviction: </b>A typical cuckoo hashing insertion scheme may involve a series of insertions, evictions, and re-insertions. We search for the entire eviction path first before applying a sequence of key displacements. Because the path search step does not displace any keys, other threads can read without retry conflicts during this step. In the path eviction step, we move keys backwards along the cuckoo path so that each displacement only affects one key at a time. Separating the search and eviction steps reduces the "floating time" of keys, <b>minimizing the number of retries for concurrent readers</b>.</p>
+
+                <br>
+
+                <p><b>Space Efficiency:</b> Using 4 slots per bucket with tag-based lookups and insertions allows us to achieve <b>90% space efficiency without significant degradation in performance</b>. Other open addressing schemes such as linear probing and basic cuckoo hashing tend to degrade in performance after about 50% space efficiency.</p>
+
+                <br>
+
+                <p>After implementing the optimizations above for a multiple reader, single writer workload, we want to create a general purpose concurrent hashmap that performed well for multiple writers.</p>
+
+                <hr>
+
+                <h2>Results</h2>
+
+                <p>We measured the results of our hashmap implementations by benchmarking raw read/write throughput per second. We used 10M strings, converted from randomly generated integers, as key and value inputs. All tests were performed on an Intel Xeon CPU E5-2680, which has 64-byte cache lines. Recall that a HashPointer struct in a parallel cuckoo hashmap with tags requires 16 bytes, so a 4-way set associative bucket can fit entirely into a 64-byte cache line.</p>
+
+                <br>
+
+                <figure><center>
+                    <img src="img/01_read_throughput.png" style="width:50%;height:50%;">
+                    <figcaption><b>Figure 3. </b>Randomized read throughput with 24 threads for parallel implementations.</figcaption>
+                </figure></center>
+
+                <br><br><br>
+
+                <figure><center>
+                    <img src="img/02_space_efficiency.png" style="width:50%;height:50%;">
+                    <figcaption><b>Figure 4. </b>Randomized read throughput with 24 threads for parallel implementations. Parallel cuckoo hashing with the tag optimization did not have any significant performance degradation even as the density of the hashmap increased to 90%, likely because reads for contiguous slots in a bucket after the first slot are cache hits.</figcaption>
+                </figure></center>
+
+                <br><br><br>
+
+                <figure><center>
+                    <img src="img/03_single_bucket_lookups.png" style="width:50%;height:50%;">
+                    <figcaption><b>Figure 5. </b>Read throughput with a single random key that hashes to the same bucket. </figcaption>
+                </figure></center>
+
+                <br><br><br>
+
+                <figure><center>
+                    <img src="img/04_hash_throughput.png" style="width:50%;height:50%;">
+                    <figcaption><b>Figure 6. </b>Speed of various hash functions on strings. We tested different hash functions because the overhead of hashing keys was a significant performance bottleneck. The throughput for hashlittle2 in the graph was multiplied by 2 to account for hashlittle2 generating two  32-bit hash values.</figcaption>
+                </figure></center>
+
+                <br><br><br>
+
+                <figure><center>
+                    <img src="img/05_insertion_throughput.png" style="width:50%;height:50%;">
+                    <figcaption><b>Figure 7. </b>Our work presented so far focuses on a read-heavy workload. Over the next few days, we will experiment with optimizations for improving write throughput. We want to try a "lock later" optimization where multiple threads can concurrently search for an eviction path during cuckoo insertion. If we have time, we will also experiment with different set associativities and try using spin locks over simple mutexes.</figcaption>
                 </figure></center>
 
                 <br>
 
-                <p>Optimistic Concurrent Cuckoo HashMaps (Figure 3) have several optimizations for read-heavy workloads built onto the basic cuckoo hashing scheme. Each bucket is 4-way set associative, with each slot containing a HashPointer struct that has a tag and a pointer to the HashEntry. After generating two hash values for a key, we apply another hash to the hash values to determine the tag value. When reading or writing keys, we only make a pointer dereference if the tag values match. A HashPointer struct requires 16 bytes of memory on a 64-bit system, so we make the buckets 4-way set associative to achieve <b>high cache locality</b> on a 64-byte cache line. A key-version counter array is used to provide <b>concurrent lock free reads</b>. With 4-way set associative buckets, we hope to achieve <b>90% space efficiency</b>.
+                <hr>
+
+                <h3>Acknowledgements</h3>
+                <p>Many of the optimizations implemented for this project were borrowed from Fan et. al.<sup>1</sup></p>
+                <p>Our hash function was written by Bob Jenkins and is publicly available <a href="http://burtleburtle.net/bob/c/lookup3.c" target="_blank">here</a>.</p>
 
                 <hr>
 
-                <h2>Challenge</h2>
-                <p>Using the C++ std::unordered_map as a baseline, we will iteratively implement several hashmap algorithms, with a focus on maximizing concurrent performance under different read/write workloads. We will also interested in measuring memory efficiency of our implementations.</p>
-
-                <p>Our final implementation will hopefully parallelize well to concurrent, read-heavy workloads and be much more space efficient than a basic separate chaining implementation. The optimistic concurrent cuckoo hashmap will use atomic hardware instructions for lock-free reads, and we will choose a data structure that maximizes cache locality and space efficiency.</p>
-
-                <p>Concurrently accessing and modifying a shared data structure is inherently challenging and prone to concurrency issues such as deadlock and race condtions. We will also design a good test suite that accurately profiles how different hashmap implementations perform under various workloads. The throughput depends not only on percentage of reads and writes, but also on how the concurrent requests are interleaved. Simultaneous reads and writes with keys that hash to the same buckets will naturally generate more contention. We hope to capture this in our test cases.</p>
-
-                <hr>
-
-                <h2>Resources</h2>
-                <p>We will be using Intel Xeon Processor E5-2680 from the Unix machines and the Intel Xeon Phi coprocessor from the Latedays cluster.</p>
-
-                <hr>
-
-                <h2>Goals and Deliverables</h2>
-
-                <h4>Things we Plan to Implement:</h4>
-                <ol>
-                    <li>Sequential hashmap using separate chaining</li>
-                    <li>Fine grained parallel implementation of (1) using chain-level locks.</li>
-                    <li>Coarse grained parallel implementation using cuckoo hashing.</li>
-                    <li>Fine grained parallel implementation using optimistic concurrent cuckoo hashing.</li>
-                </ol>
-
-                <hr>
-
-                <h4>Hope to Achieve:</h4>
-                <ol>
-                    <li>Measure memory efficiency of our various key-value store implementations.</li>
-                    <li>Distribute the key-value store across multiple nodes and measure total throughput.</li>
-                </ol>
-
-                <hr>
-
-                <h4>Performance Goals:</h4>
-                <p>We plan to create speedup graphs for all of our implementations. For the implementations involving cuckoo hashing and optimistic concurrent cuckoo hashing, we will also see how speedup varies as we change the workload (percentage of read/write requests). By the time we reach our final implementation with optimistic cuckoo hashing, we hope to achieve a 10x speedup over the sequential version with 97.5% read requests and 2.5% write requests on the Latedays cluster. This is based on metrics from Fan et. al.<sup>1</sup> The system that they used is similar to the Latedays cluster.</p>
-
-                <hr>
-
-                <h2>Platform</h2>
-                <p>Our project will be implemented in C++ and should work on a variety of platforms. We are focusing on the Xeon Phi on the Latedays cluster because it provides an isolated and consistent testing environment. Also, the Xeon Phi is one of the more powerful resources we have access to, allowing us to determine the maximum throughput that we can achieve.</p>
-
-                <hr>
-
-                <h2>Schedule</h2>
-
-                <table border="1" style="width:100%">
-                  <tr>
-                    <td><b>&nbsp;Week</b></td>
-                    <td><b>&nbsp;Goal</b></td>
-                  </tr>
-                  <tr>
-                    <td>&nbsp;4/3 - 4/9</td>
-                    <td>&nbsp;Read literature; implement sequential key-value store</td>
-                  </tr>
-                  <tr>
-                    <td>&nbsp;4/10 - 4/16</td>
-                    <td>&nbsp;Implement coarse and fine grained key-value store</td>
-                  </tr>
-                  <tr>
-                    <td>&nbsp;4/17 - 4/23</td>
-                    <td>&nbsp;Implement cuckoo hashing</td>
-                  </tr>
-                  <tr>
-                    <td>&nbsp;4/24 - 4/30</td>
-                    <td>&nbsp;Begin optimistic cuckoo hashing implementation</td>
-                  </tr>
-                  <tr>
-                    <td>&nbsp;5/1 - 5/9</td>
-                    <td>&nbsp;Finish optimistic cuckoo hashing implementation</td>
-                  </tr>
-                </table>
-
-                <hr>
-
-                <h2>References</h2>
+                <h3>References</h3>
                 <sup>1</sup><a href="http://www.cs.cmu.edu/~dga/papers/memc3-nsdi2013.pdf">http://www.cs.cmu.edu/~dga/papers/memc3-nsdi2013.pdf</a><br>
-                <sup>2</sup><a href="https://memcached.org/">https://memcached.org</a><br>
+
+                <hr>
+
+                <h3>Work Done By Each Student</h3>
+                Equal work was performed by both project members.
+
             </div>
         </div>
 
@@ -197,6 +211,7 @@
     </div>
 
     <!-- /.container -->
+
 
     <!-- jQuery -->
     <script src"js/jquery.js"></script>
