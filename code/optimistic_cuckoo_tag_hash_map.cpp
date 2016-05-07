@@ -83,8 +83,8 @@ T OptimisticCuckooTagHashMap<T>::get(std::string key) {
     if (key_version_start & 0x1 || key_version_start != key_version_end) {
         goto Try;
     }
-
-    throw KeyNotFoundError(key.c_str());
+    return "";
+    //throw KeyNotFoundError(key.c_str());
 }
 
 template <typename T>

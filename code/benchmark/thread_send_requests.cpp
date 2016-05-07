@@ -25,14 +25,43 @@ void* thread_send_requests(void* threadArgs) {
         for (int i = chunk_start; i < chunk_end; i++) {
             my_map->get(keys[i]);
         }
-    } else if (fabs(percent_writes - 1.0f) <= EPSILON) {
+    }
+    else if (fabs(percent_writes - 1.0f) <= EPSILON) {
       //std::cout << "chunk_start: " << chunk_start << " chunk_end: " << chunk_end << std::endl;
       for (int i = chunk_start; i < chunk_end; i++) {
-          //std::cout << "Trying to put " << keys[i] << std::endl;
-            my_map->put(keys[i], keys[i]);
+        //std::cout << "Trying to put " << keys[i] << std::endl;
+        my_map->put(keys[i], keys[i]);
+      }
+    }
+    else {
+      int write_range = percent_writes*100;
+      //int write_begin = 100-write_range;
+      // randomize write regions for each thread
+      int write_begin = rand() % (100-write_range);
+      //int write_begin = 100 - write_range;
+      int write_end = write_begin + write_range;
+
+      //std::cout << "Write Begin " << write_begin << " Write End " << write_end << std::endl;
+
+      for (int i = chunk_start ; i < chunk_end; i++){
+        int mod_by_100 = i % 100;
+
+        //if write_begin <= mod_by_100 <= 99
+        // do writes
+
+        if (write_begin <= mod_by_100 && mod_by_100 <= write_end){
+          //std::cout << "Put: " << keys[i] << std::endl;
+
+          my_map->put(keys[i],keys[i]);
         }
-    } else {
-        std::cout << "TODO" << std::endl;
+        //else just do reads
+        else{
+          //std::cout << "Get: " << keys[i] << std::endl;
+
+          my_map->get(keys[i]);
+        }
+      }
+      //std::cout << "TODO" << std::endl;
     }
 
     return NULL;

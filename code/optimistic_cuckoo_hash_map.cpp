@@ -81,7 +81,8 @@ T OptimisticCuckooHashMap<T>::get(std::string key) {
         goto Try;
     }
 
-    throw KeyNotFoundError(key.c_str());
+    //throw KeyNotFoundError(key.c_str());
+    return "";
 }
 
 template <typename T>

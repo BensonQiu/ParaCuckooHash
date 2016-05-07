@@ -30,12 +30,20 @@ BenchmarkOptCuckooTagHashMap<T>::~BenchmarkOptCuckooTagHashMap() {
 template <typename T>
 void BenchmarkOptCuckooTagHashMap<T>::benchmark_random_interleaved_read_write() {
 
-	std::cout << "TODO: Interleaved Reads / Writes" << std::endl;
+  //std::cout << "TODO: Interleaved Reads / Writes" << std::endl;
 
-    OptimisticCuckooTagHashMap<T> my_map(m_num_buckets);
-    try {
-	    my_map.get("hello");
-	} catch(KeyNotFoundError) {}
+  	for (float space_efficiency = 0.15f; space_efficiency <= 0.9f; space_efficiency += 0.15f) {
+		int num_buckets = (1.0f/space_efficiency) * m_num_ops / float(m_slots_per_bucket);
+
+	    for (float read_percentage = 0.25f ; read_percentage <= 1.0f; read_percentage += 0.25f){
+          OptimisticCuckooTagHashMap<T> my_map(num_buckets);
+          double best_time = m_benchmark_reads_helper(&my_map, read_percentage);
+
+          std::cout << "\t Interleaved case: " << 100*space_efficiency << "% Space Efficiency (" << NUM_READERS << " Reader Threads), Read Percentage " << read_percentage*100 << "% :"
+                    << m_num_ops / best_time / (1000 * 1000) << std::endl;
+        }
+	}
+
 }
 
 template <typename T>
@@ -133,7 +141,7 @@ void BenchmarkOptCuckooTagHashMap<T>::benchmark_space_efficiency() {
 
 template <typename T>
 double BenchmarkOptCuckooTagHashMap<T>::m_benchmark_reads_helper(
-		OptimisticCuckooTagHashMap<T>* my_map) {
+                                                                 OptimisticCuckooTagHashMap<T>* my_map, float read_percentage) {
 
 	// Warm up the hashmap.
 	for (int i = 0; i < m_num_ops; i++) {
@@ -149,7 +157,7 @@ double BenchmarkOptCuckooTagHashMap<T>::m_benchmark_reads_helper(
         args[i].thread_id = (long int)i;
         args[i].num_threads = NUM_READERS;
         args[i].num_ops = m_num_ops;
-        args[i].percent_reads = 1.0f;
+        args[i].percent_reads = read_percentage;
         args[i].keys = m_random_keys;
     }
 
@@ -179,10 +187,10 @@ void BenchmarkOptCuckooTagHashMap<T>::run_all() {
 	std::cout << "Benchmarking Optimistic Cuckoo Tag HashMap, " << m_num_ops << " Operations..." << std::endl;
 
 	benchmark_random_interleaved_read_write();
-	benchmark_read_only();
-	benchmark_write_only();
-	benchmark_read_only_single_bucket();
-	benchmark_space_efficiency();
+	//benchmark_read_only();
+	//benchmark_write_only();
+	//benchmark_read_only_single_bucket();
+	//benchmark_space_efficiency();
 
     std::cout << std::endl;
 }

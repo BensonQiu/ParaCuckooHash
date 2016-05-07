@@ -31,7 +31,7 @@ class BenchmarkOptCuckooTagHashMap {
 		int m_num_buckets;
 		std::string* m_random_keys;
 
-		double m_benchmark_reads_helper(OptimisticCuckooTagHashMap<T>* my_map);
+		double m_benchmark_reads_helper(OptimisticCuckooTagHashMap<T>* my_map, float read_percentage=1.0f);
 
 };
 
