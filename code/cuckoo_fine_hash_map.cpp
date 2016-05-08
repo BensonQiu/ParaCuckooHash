@@ -11,7 +11,6 @@ CuckooFineHashMap<T>::CuckooFineHashMap(int num_buckets) {
     m_table = new HashEntry*[num_buckets * SLOTS_PER_BUCKET]();
     m_num_buckets = num_buckets;
     m_bucket_locks = new std::mutex[num_buckets];
-
 };
 
 template <typename T>

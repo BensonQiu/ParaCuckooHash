@@ -39,7 +39,6 @@ void BenchmarkFineCuckoo<T>::benchmark_random_interleaved_read_write() {
 	    for (float read_percentage = 0.0f ; read_percentage <= 1.0f; read_percentage += 0.10f){
           CuckooFineHashMap<T> my_map(num_buckets);
           double best_time = m_benchmark_reads_helper(&my_map, read_percentage);
-
           std::cout << "\t Interleaved case: " << 100*space_efficiency << "% Space Efficiency (" << NUM_READERS
                     << " Reader Threads), Read Percentage " << read_percentage*100 << "%: "
                     << m_num_ops / best_time / (1000 * 1000) << std::endl;
