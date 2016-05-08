@@ -8,7 +8,7 @@
 #include <iterator>
 
 template <typename T>
-OptimisticCuckooTagBetterLockHashMap<T>::OptimisticCuckooTagBetterLockHashMap(int num_buckets) {
+OptimisticCuckooTagLockLaterHashMap<T>::OptimisticCuckooTagLockLaterHashMap(int num_buckets) {
 
     m_table = new HashPointer[num_buckets * SLOTS_PER_BUCKET]();
     m_num_buckets = num_buckets;
@@ -17,14 +17,14 @@ OptimisticCuckooTagBetterLockHashMap<T>::OptimisticCuckooTagBetterLockHashMap(in
 };
 
 template <typename T>
-OptimisticCuckooTagBetterLockHashMap<T>::~OptimisticCuckooTagBetterLockHashMap() {
+OptimisticCuckooTagLockLaterHashMap<T>::~OptimisticCuckooTagLockLaterHashMap() {
 
     delete[] m_table;
     delete[] m_key_version_counters;
 }
 
 template <typename T>
-T OptimisticCuckooTagBetterLockHashMap<T>::get(std::string key) {
+T OptimisticCuckooTagLockLaterHashMap<T>::get(std::string key) {
 
     // Hash to two buckets.
     uint32_t h1, h2;
@@ -108,7 +108,7 @@ T OptimisticCuckooTagBetterLockHashMap<T>::get(std::string key) {
 
 
 template <typename T>
-void OptimisticCuckooTagBetterLockHashMap<T>::put(std::string key, T val){
+void OptimisticCuckooTagLockLaterHashMap<T>::put(std::string key, T val){
   int i = 0;
   while (!put_helper(key,val)){
     i++;
@@ -124,7 +124,7 @@ void OptimisticCuckooTagBetterLockHashMap<T>::put(std::string key, T val){
 
 
 template <typename T>
-bool OptimisticCuckooTagBetterLockHashMap<T>::put_helper(std::string key, T val) {
+bool OptimisticCuckooTagLockLaterHashMap<T>::put_helper(std::string key, T val) {
 
     int num_iters = 0;
     std::string curr_key = key;
@@ -418,7 +418,7 @@ EvictedKey:
 }
 
 template <typename T>
-unsigned char OptimisticCuckooTagBetterLockHashMap<T>::tag_hash(const uint32_t hv) {
+unsigned char OptimisticCuckooTagLockLaterHashMap<T>::tag_hash(const uint32_t hv) {
     uint32_t r =  hv & m_tagmask;
     return (unsigned char) r + (r == 0);
 }

@@ -1,17 +1,17 @@
-#ifndef OPTIMISTIC_CUCKOO_TAG_BETTERLOCK_HASHMAP_H
-#define OPTIMISTIC_CUCKOO_TAG_BETTERLOCK_HASHMAP_H
+#ifndef OPTIMISTIC_CUCKOO_TAG_LOCKLATER_HASHMAP_H
+#define OPTIMISTIC_CUCKOO_TAG_LOCKLATER_HASHMAP_H
 
 
 template <typename T>
-class OptimisticCuckooTagBetterLockHashMap {
+class OptimisticCuckooTagLockLaterHashMap {
 
     public:
         const int SLOTS_PER_BUCKET = 4;
         const int MAX_ITERS = 500;
         const int NUM_KEY_VERSION_COUNTERS = 8192;
 
-        OptimisticCuckooTagBetterLockHashMap(int num_buckets=64);
-        ~OptimisticCuckooTagBetterLockHashMap();
+        OptimisticCuckooTagLockLaterHashMap(int num_buckets=64);
+        ~OptimisticCuckooTagLockLaterHashMap();
 
         T get(std::string key);
         void put(std::string key, T val);
@@ -42,6 +42,6 @@ class OptimisticCuckooTagBetterLockHashMap {
         bool put_helper(std::string key, T val);
 };
 
-#include "optimistic_cuckoo_tag_better_lock_hash_map.cpp"
+#include "optimistic_cuckoo_tag_locklater_hash_map.cpp"
 
 #endif
