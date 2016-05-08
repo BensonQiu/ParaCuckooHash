@@ -36,36 +36,27 @@ void BenchmarkOptCuckooTagLockLaterHashMap<T>::benchmark_random_interleaved_read
   	for (float space_efficiency = 0.15f; space_efficiency <= 0.9f; space_efficiency += 0.15f) {
 		int num_buckets = (1.0f/space_efficiency) * m_num_ops / float(m_slots_per_bucket);
 
-	    for (float read_percentage = 0.80f ; read_percentage <= 1.0f; read_percentage += 0.025f){
-          OptimisticCuckooTagLockLaterHashMap<T> my_map(num_buckets);
+	    for (float read_percentage = 0.80f; read_percentage <= 1.0f; read_percentage += 0.025f) {
+			OptimisticCuckooTagLockLaterHashMap<T> my_map(num_buckets);
 
+			for (float prepopulate_percentage = 0.85f; prepopulate_percentage <= 0.95f ; prepopulate_percentage += 0.05f) {
 
-          for (float prepopulate_percentage = 0.85f; prepopulate_percentage <= 0.95f ; prepopulate_percentage += 0.05f){
+				if (prepopulate_percentage == 1.0f) {
+					double best_time = m_benchmark_reads_helper(&my_map, read_percentage);
 
+					std::cout << "\t Interleaved case: " << 100*space_efficiency << "% Space Efficiency (" << NUM_READERS
+							  << " Reader Threads), Read Percentage " << read_percentage*100 << "%, Prepopulate percentage: " << prepopulate_percentage * 100 << "% : "
+				              << m_num_ops / best_time / (1000 * 1000) << std::endl;
+				} else {
+					// Prepopulate hash map
+					m_benchmark_reads_helper(&my_map, 0, prepopulate_percentage);
+					double best_time = m_benchmark_reads_helper(&my_map, read_percentage, 1-prepopulate_percentage);
 
-            if (prepopulate_percentage == 1.0f){
-
-              double best_time = m_benchmark_reads_helper(&my_map, read_percentage);
-
-              std::cout << "\t Interleaved case: " << 100*space_efficiency << "% Space Efficiency (" << NUM_READERS
-                        << " Reader Threads), Read Percentage " << read_percentage*100 << "%, Prepopulate percentage: " << prepopulate_percentage * 100 << "% : "
-                        << m_num_ops / best_time / (1000 * 1000) << std::endl;
-            }
-            else{
-              // Prepopulate hash map
-              m_benchmark_reads_helper(&my_map, 0, prepopulate_percentage);
-
-
-
-              double best_time = m_benchmark_reads_helper(&my_map, read_percentage, 1-prepopulate_percentage);
-
-
-              std::cout << "\t Interleaved case: " << 100*space_efficiency << "% Space Efficiency (" << NUM_READERS
-                        << " Reader Threads), Read Percentage " << read_percentage*100 << "%, Prepopulate percentage: " << prepopulate_percentage * 100 << "% : "
-                        << m_num_ops * (1.0f-prepopulate_percentage) / best_time / (1000 * 1000) << std::endl;
-
-            }
-          }
+					std::cout << "\t Interleaved case: " << 100*space_efficiency << "% Space Efficiency (" << NUM_READERS
+							  << " Reader Threads), Read Percentage " << read_percentage*100 << "%, Prepopulate percentage: " << prepopulate_percentage * 100 << "% : "
+							  << m_num_ops * (1.0f-prepopulate_percentage) / best_time / (1000 * 1000) << std::endl;
+				}
+			}
         }
 	}
 }
@@ -190,7 +181,7 @@ double BenchmarkOptCuckooTagLockLaterHashMap<T>::m_benchmark_reads_helper(Optimi
 	double start_time, end_time, best_time;
 
     best_time = 1e30;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 10; i++) {
         start_time = CycleTimer::currentSeconds();
 	    for (int j = 0; j < NUM_READERS; j++) {
 	        pthread_create(&workers[j], NULL,
@@ -201,7 +192,7 @@ double BenchmarkOptCuckooTagLockLaterHashMap<T>::m_benchmark_reads_helper(Optimi
 	    }
         end_time = CycleTimer::currentSeconds();
         best_time = std::min(best_time, end_time-start_time);
-        // std::cout << "\t" << end_time-start_time << std::endl;
+        std::cout << "\t" << end_time-start_time << std::endl;
     }
 
 	return best_time;
@@ -212,10 +203,10 @@ void BenchmarkOptCuckooTagLockLaterHashMap<T>::run_all() {
 
 	std::cout << "Benchmarking Optimistic Cuckoo Tag Lock LaterHashMap, " << m_num_ops << " Operations..." << std::endl;
 
-	benchmark_random_interleaved_read_write();
-	benchmark_read_only();
-	benchmark_write_only();
-	benchmark_read_only_single_bucket();
+	// benchmark_random_interleaved_read_write();
+	// benchmark_read_only();
+	// benchmark_write_only();
+	// benchmark_read_only_single_bucket();
 	benchmark_space_efficiency();
 
     std::cout << std::endl;

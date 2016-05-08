@@ -31,11 +31,6 @@ template <typename T>
 void BenchmarkOptCuckooHashMap<T>::benchmark_random_interleaved_read_write() {
 
 	std::cout << "TODO: Interleaved Reads / Writes" << std::endl;
-
-    OptimisticCuckooHashMap<T> my_map(m_num_buckets);
-    try {
-	    my_map.get("hello");
-	} catch(KeyNotFoundError) {}
 }
 
 template <typename T>
