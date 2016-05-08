@@ -35,15 +35,15 @@ void BenchmarkOptCuckooTagHashMap<T>::benchmark_random_interleaved_read_write() 
   	for (float space_efficiency = 0.15f; space_efficiency <= 0.9f; space_efficiency += 0.15f) {
 		int num_buckets = (1.0f/space_efficiency) * m_num_ops / float(m_slots_per_bucket);
 
-	    for (float read_percentage = 0.25f ; read_percentage <= 1.0f; read_percentage += 0.25f){
+	    for (float read_percentage = 0.80f ; read_percentage <= 1.0f; read_percentage += 0.05f){
           OptimisticCuckooTagHashMap<T> my_map(num_buckets);
           double best_time = m_benchmark_reads_helper(&my_map, read_percentage);
 
-          std::cout << "\t Interleaved case: " << 100*space_efficiency << "% Space Efficiency (" << NUM_READERS << " Reader Threads), Read Percentage " << read_percentage*100 << "% :"
+          std::cout << "\t Interleaved case: " << 100*space_efficiency << "% Space Efficiency (" << NUM_READERS
+                    << " Reader Threads), Read Percentage " << read_percentage*100 << "%: "
                     << m_num_ops / best_time / (1000 * 1000) << std::endl;
         }
 	}
-
 }
 
 template <typename T>
