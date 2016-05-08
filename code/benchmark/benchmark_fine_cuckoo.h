@@ -1,21 +1,21 @@
-#ifndef BENCHMARK_OPT_CUCKOO_TAG_H
-#define BENCHMARK_OPT_CUCKOO_TAG_H
+#ifndef BENCHMARK_FINE_CUCKOO
+#define BENCHMARK_FINE_CUCKOO
 
-#include "../optimistic_cuckoo_tag_hash_map.h"
+#include "../cuckoo_fine_hash_map.h"
 
 template <typename T>
-class BenchmarkOptCuckooTagHashMap {
+class BenchmarkFineCuckoo {
 
 	public:
 		const int NUM_READERS = 24;
 		const int NUM_WRITERS = 8;
 
-		BenchmarkOptCuckooTagHashMap(
+		BenchmarkFineCuckoo(
 			int num_ops=2*1000*1000,
 			float space_efficiency=0.9f,
 			int slots_per_bucket=4
 		);
-		~BenchmarkOptCuckooTagHashMap();
+		~BenchmarkFineCuckoo();
 
 		void benchmark_random_interleaved_read_write();
 		void benchmark_read_only();
@@ -31,10 +31,10 @@ class BenchmarkOptCuckooTagHashMap {
 		int m_num_buckets;
 		std::string* m_random_keys;
 
-		double m_benchmark_reads_helper(OptimisticCuckooTagHashMap<T>* my_map, float read_percentage=1.0f);
+		double m_benchmark_reads_helper(CuckooFineHashMap<T>* my_map, float read_percentage=1.0f);
 
 };
 
-#include "benchmark_opt_cuckoo_tag.cpp"
+#include "benchmark_fine_cuckoo.cpp"
 
 #endif
