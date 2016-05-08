@@ -7,6 +7,8 @@ struct WorkerArgs {
     int thread_id;
     int num_threads;
     int num_ops;
+    // percentage of ops you want to execute
+    float ops_percentage=1.0f;
     float percent_reads;
     std::string* keys;
 };

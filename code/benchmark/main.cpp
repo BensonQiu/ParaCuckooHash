@@ -112,8 +112,8 @@ int main() {
     // BenchmarkCuckooHashMap<std::string> benchmark_cuckoo(NUM_OPS);
     // benchmark_cuckoo.run_all();
 
-    BenchmarkFineCuckoo<std::string> benchmark_fine_cuckoo(NUM_OPS);
-    benchmark_fine_cuckoo.run_all();
+    //BenchmarkFineCuckoo<std::string> benchmark_fine_cuckoo(NUM_OPS);
+    //benchmark_fine_cuckoo.run_all();
 
     // BenchmarkOptCuckooHashMap<std::string> benchmark_opt_cuckoo(NUM_OPS);
     // benchmark_opt_cuckoo.run_all();
@@ -121,8 +121,8 @@ int main() {
     // BenchmarkOptCuckooTagHashMap<std::string> benchmark_opt_cuckoo_tag(NUM_OPS);
     // benchmark_opt_cuckoo_tag.run_all();
 
-    BenchmarkOptCuckooTagLockLaterHashMap<std::string> benchmark_opt_cuckoo_tag_ll(NUM_OPS);
-    benchmark_opt_cuckoo_tag_ll.run_all();
+    //BenchmarkOptCuckooTagLockLaterHashMap<std::string> benchmark_opt_cuckoo_tag_ll(NUM_OPS);
+    //benchmark_opt_cuckoo_tag_ll.run_all();
 
     // BenchmarkHash benchmark_hash(NUM_OPS);
     // benchmark_hash.run_all();

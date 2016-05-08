@@ -31,7 +31,7 @@ class BenchmarkFineCuckoo {
 		int m_num_buckets;
 		std::string* m_random_keys;
 
-		double m_benchmark_reads_helper(CuckooFineHashMap<T>* my_map, float read_percentage=1.0f);
+		double m_benchmark_reads_helper(CuckooFineHashMap<T>* my_map, float read_percentage=1.0f, float opts_percentage=1.0f);
 
 };
 

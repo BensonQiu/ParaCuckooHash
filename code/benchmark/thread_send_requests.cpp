@@ -1,4 +1,6 @@
 #include <math.h>
+#include <iomanip>
+
 
 #define EPSILON 0.0001f
 
@@ -11,14 +13,31 @@ void* thread_send_requests(void* threadArgs) {
     int num_ops = args->num_ops;
     float percent_reads = args->percent_reads;
     float percent_writes = 1.0f - percent_reads;
+    //percentage of the ops that you're actually executing
+    float ops_percentage = args->ops_percentage;
     std::string* keys = args->keys;
 
     // TODO: Calculate start/end for interleaved read/writes.
     int chunk_start = thread_ID * num_ops / num_threads;
     int chunk_end = (thread_ID + 1) * num_ops / num_threads;
+
     if (thread_ID == num_threads - 1) {
         chunk_end = num_ops;
     }
+
+    // if number of ops is not 100, manually adjust the chunk ranges
+    if (ops_percentage != 1.0f){
+
+      int actual_ops =  (chunk_end - chunk_start) * ops_percentage;
+
+      chunk_end = chunk_start + actual_ops;
+
+      if (thread_ID == num_threads - 1){
+        chunk_end = actual_ops;
+      }
+    }
+
+
 
     T* my_map = (T*)args->my_map;
     if (fabs(percent_reads - 1.0f) <= EPSILON) {
