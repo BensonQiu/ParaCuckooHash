@@ -23,6 +23,7 @@ OptimisticCuckooHashMap<T>::~OptimisticCuckooHashMap() {
         delete m_table[i];
     delete[] m_table;
     delete[] m_key_version_counters;
+    delete[] m_visited_bitmap;
 }
 
 template <typename T>
@@ -267,6 +268,7 @@ EvictedKey:
         HashEntry* to_hash_entry = new HashEntry();
         to_hash_entry->key = from_hash_entry->key;
         to_hash_entry->val = from_hash_entry->val;
+        delete m_table[to_index];
         m_table[to_index] = to_hash_entry;
         __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
 

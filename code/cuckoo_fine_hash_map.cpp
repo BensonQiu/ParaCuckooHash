@@ -72,13 +72,6 @@ void CuckooFineHashMap<T>::lock_helper(uint32_t h1, uint32_t h2) {
     h1 = h1 / SLOTS_PER_BUCKET;
     h2 = h2 / SLOTS_PER_BUCKET;
 
-    if (!(0 <= h1 && h1 < m_num_buckets)) {
-        std::cout << "Lock Helper Fail for h1: " << h1 << std::endl;
-    }
-    if (!(0 <= h2 && h2 < m_num_buckets)) {
-        std::cout << "Lock Helper Fail for h2: " << h2 << std::endl;
-    }
-
     if (h1 < h2) {
         m_bucket_locks[h1].lock();
         m_bucket_locks[h2].lock();
@@ -95,13 +88,6 @@ void CuckooFineHashMap<T>::unlock_helper(uint32_t h1, uint32_t h2) {
 
     h1 = h1 / SLOTS_PER_BUCKET;
     h2 = h2 / SLOTS_PER_BUCKET;
-
-    if (!(0 <= h1 && h1 < m_num_buckets)) {
-        std::cout << "Unlock Helper Fail for h1: " << h1 << std::endl;
-    }
-    if (!(0 <= h2 && h2 < m_num_buckets)) {
-        std::cout << "Unlock Helper Fail for h2: " << h2 << std::endl;
-    }
 
     if (h1 == h2) {
         m_bucket_locks[h1].unlock();

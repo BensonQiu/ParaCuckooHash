@@ -130,6 +130,7 @@ void BenchmarkFineHashMap<T>::benchmark_read_only_single_bucket() {
 	    std::cout << "\t" << "Read-Only Single Bucket (" << num_readers << " Reader Threads): "
 	              << m_num_ops / best_time / (1000 * 1000) << std::endl;
 	}
+	delete[] identical_keys;
 }
 
 template <typename T>
@@ -137,9 +138,9 @@ void BenchmarkFineHashMap<T>::run_all() {
 
 	std::cout << "Benchmarking Fine HashMap, " << m_num_ops << " Operations..." << std::endl;
 
-	benchmark_random_interleaved_read_write();
-	benchmark_read_only();
-	benchmark_write_only();
+	// benchmark_random_interleaved_read_write();
+	// benchmark_read_only();
+	// benchmark_write_only();
 	benchmark_read_only_single_bucket();
 
 	std::cout << std::endl;

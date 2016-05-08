@@ -19,8 +19,14 @@ OptimisticCuckooTagLockLaterHashMap<T>::OptimisticCuckooTagLockLaterHashMap(int 
 template <typename T>
 OptimisticCuckooTagLockLaterHashMap<T>::~OptimisticCuckooTagLockLaterHashMap() {
 
+    for (int i = 0; i < m_num_buckets * SLOTS_PER_BUCKET; i++) {
+        if (m_table[i].ptr != NULL) {
+            delete m_table[i].ptr;
+        }
+    }
     delete[] m_table;
     delete[] m_key_version_counters;
+    delete[] m_visited_bitmap;
 }
 
 template <typename T>
@@ -302,7 +308,7 @@ EvictedKey:
         int index = path.front();
 
         // Someone else wrote to the key
-        if (m_table[index].ptr != NULL){
+        if (m_table[index].ptr != NULL) {
           //std::cout << "Empty slot at index: " << index << " modified, aborting for key: " << key<< std::endl;
           m_write_mutex.unlock();
           return false;
@@ -312,12 +318,9 @@ EvictedKey:
         hash_entry->key = key;
         hash_entry->val = val;
 
-        HashPointer* hash_pointer = new HashPointer();
-        hash_pointer->tag = tag;
-        hash_pointer->ptr = hash_entry;
-
         __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
-        m_table[index] = *hash_pointer;
+        (&m_table[index])->tag = tag;
+        m_table[index].ptr = hash_entry;
         __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
 
         //std::cout << "Successfully Wrote key: " << key << " at index " << index << ", key is now " << m_table[index].ptr-> key << std::endl;
@@ -386,16 +389,17 @@ EvictedKey:
 
         m_visited_bitmap[from_index] = 0;
 
-
-
         __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
         HashPointer from_hash_pointer = m_table[from_index];
-        HashPointer* to_hash_pointer = new HashPointer();
+        HashPointer* to_hash_pointer = &m_table[to_index];
         to_hash_pointer->tag = from_hash_pointer.tag;
         to_hash_pointer->ptr = new HashEntry();
         to_hash_pointer->ptr->key = from_hash_pointer.ptr->key;
         to_hash_pointer->ptr->val = from_hash_pointer.ptr->val;
-        m_table[to_index] = *to_hash_pointer;
+        if (m_table[from_index].ptr != NULL) {
+            delete m_table[from_index].ptr;
+        }
+        // m_table[to_index] = *to_hash_pointer;
         __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
 
         to_index = from_index;
@@ -408,6 +412,7 @@ EvictedKey:
     __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
     HashPointer* hash_pointer = &m_table[first_index];
     hash_pointer->tag = tag;
+    hash_pointer->ptr = new HashEntry();
     hash_pointer->ptr->key = key;
     hash_pointer->ptr->val = val;
     __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);

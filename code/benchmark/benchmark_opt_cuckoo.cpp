@@ -115,6 +115,7 @@ void BenchmarkOptCuckooHashMap<T>::benchmark_read_only_single_bucket() {
 	    std::cout << "\t" << "Read-Only Single Bucket (" << num_readers << " Reader Threads): "
 	              << m_num_ops / best_time / (1000 * 1000) << std::endl;
 	}
+	delete[] identical_keys;
 }
 
 template <typename T>

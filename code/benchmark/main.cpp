@@ -27,9 +27,9 @@
 //#define NUM_OPS 20 * 1000 * 1000
 
 // #define NUM_BUCKETS 1 * 1000 * 1000
-#define NUM_OPS 1 * 1000 * 1000
+// #define NUM_OPS 1 * 1000 * 1000
 
-// #define NUM_OPS 5000
+#define NUM_OPS 100
 
 void benchmark_fine_cuckoo() {
 
@@ -102,27 +102,27 @@ int main() {
 
     std::cout << "***** Starting benchmark with " << NUM_OPS << " operations *****" << std::endl;
 
-    // BenchmarkUnorderedMap<std::string> benchmark_unordered_map(NUM_OPS);
-    // benchmark_unordered_map.run_all();
+    BenchmarkUnorderedMap<std::string> benchmark_unordered_map(NUM_OPS);
+    benchmark_unordered_map.run_all();
 
-    // BenchmarkFineHashMap<std::string> benchmark_fine(NUM_OPS);
-    // benchmark_fine.run_all();
+    BenchmarkFineHashMap<std::string> benchmark_fine(NUM_OPS);
+    benchmark_fine.run_all();
 
-    // BenchmarkCuckooHashMap<std::string> benchmark_cuckoo(NUM_OPS);
-    // benchmark_cuckoo.run_all();
+    BenchmarkCuckooHashMap<std::string> benchmark_cuckoo(NUM_OPS);
+    benchmark_cuckoo.run_all();
 
-    // BenchmarkFineCuckoo<std::string> benchmark_fine_cuckoo(NUM_OPS);
-    // benchmark_fine_cuckoo.run_all();
+    BenchmarkFineCuckoo<std::string> benchmark_fine_cuckoo(NUM_OPS);
+    benchmark_fine_cuckoo.run_all();
 
-    // BenchmarkOptCuckooHashMap<std::string> benchmark_opt_cuckoo(NUM_OPS);
-    // benchmark_opt_cuckoo.run_all();
+    BenchmarkOptCuckooHashMap<std::string> benchmark_opt_cuckoo(NUM_OPS);
+    benchmark_opt_cuckoo.run_all();
 
-    // BenchmarkOptCuckooTagHashMap<std::string> benchmark_opt_cuckoo_tag(NUM_OPS);
-    // benchmark_opt_cuckoo_tag.run_all();
+    BenchmarkOptCuckooTagHashMap<std::string> benchmark_opt_cuckoo_tag(NUM_OPS);
+    benchmark_opt_cuckoo_tag.run_all();
 
     BenchmarkOptCuckooTagLockLaterHashMap<std::string> benchmark_opt_cuckoo_tag_ll(NUM_OPS);
     benchmark_opt_cuckoo_tag_ll.run_all();
 
-    // BenchmarkHash benchmark_hash(NUM_OPS);
-    // benchmark_hash.run_all();
+    BenchmarkHash benchmark_hash(NUM_OPS);
+    benchmark_hash.run_all();
 }

@@ -7,7 +7,7 @@ template <typename T>
 class BenchmarkOptCuckooHashMap {
 
 	public:
-		const int NUM_READERS = 24;
+		const int NUM_READERS = 1;
 		const int NUM_WRITERS = 8;
 
 		BenchmarkOptCuckooHashMap(
