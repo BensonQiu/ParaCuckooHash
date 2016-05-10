@@ -146,6 +146,12 @@ struct HashEntry {
 
                 <br>
 
+                <figure><center>
+                    <img src="img/cache_locality.png" style="width:55%;height:55%;">
+                    <figcaption><b>Figure 4. </b>Cache miss rate measured on an Intel Xeon E5-2680 processor using perf, with 24 threads reading 10M elements. Exact results vary across machines, but there are generally fewer L3 cache misses with the tag optimization than without.</figcaption>
+                </figure></center>
+
+                <br>
                 <p><b>Separate Path Discovery and Path Eviction: </b>A typical cuckoo hashing insertion scheme may involve a series of insertions, evictions, and re-insertions. We search for the entire eviction path first before applying a sequence of key displacements. Because the path search step does not displace any keys, other threads can read without retry conflicts during this step. In the path eviction step, we move keys backwards along the cuckoo path so that each displacement only affects one key at a time. Separating the search and eviction steps reduces the "floating time" of keys, <b>minimizing the number of retries for concurrent readers</b>. To evaluate the impact of floating time on performance, we measured the average path discovery and average path eviction times on 1M insertions, which were 0.35 and 0.19 seconds, respectively. This optimization reduced the floating time from 0.35+0.19 seconds to 0.19 seconds, a 65% decrease.</p>
 
                 <br>
@@ -170,7 +176,7 @@ struct HashEntry {
 
                 <figure><center>
                     <img src="img/01_read_throughput.png" style="width:55%;height:55%;">
-                    <figcaption><b>Figure 4. </b>Randomized read throughput with 24 threads for parallel implementations. <br>90% space efficiency was used for all cuckoo hashing schemes.</figcaption>
+                    <figcaption><b>Figure 5. </b>Randomized read throughput with 24 threads for parallel implementations. <br>90% space efficiency was used for all cuckoo hashing schemes.</figcaption>
                 </figure></center>
 
                 <br>
@@ -181,7 +187,7 @@ struct HashEntry {
 
                 <figure><center>
                     <img src="img/02_space_efficiency.png" style="width:55%;height:55%;">
-                    <figcaption><b>Figure 5. </b>Randomized read throughput with 24 threads for parallel implementations. <br>90% space efficiency was used for all cuckoo hashing schemes.</figcaption>
+                    <figcaption><b>Figure 6. </b>Randomized read throughput with 24 threads for parallel implementations. <br>90% space efficiency was used for all cuckoo hashing schemes.</figcaption>
                 </figure></center>
 
                 <br>
@@ -192,7 +198,7 @@ struct HashEntry {
 
                 <figure><center>
                     <img src="img/03_single_bucket_lookups.png" style="width:55%;height:55%;">
-                    <figcaption><b>Figure 6. </b>Read throughput with a single random key that hashes to the same bucket. </figcaption>
+                    <figcaption><b>Figure 7. </b>Read throughput with a single random key that hashes to the same bucket. </figcaption>
                 </center></figure>
 
                 <br>
@@ -203,7 +209,7 @@ struct HashEntry {
 
                 <figure><center>
                     <img src="img/04_hash_throughput.png" style="width:55%;height:55%;">
-                    <figcaption><b>Figure 7. </b>Speed of various hash functions on strings.</figcaption>
+                    <figcaption><b>Figure 8. </b>Speed of various hash functions on strings.</figcaption>
                 </figure></center>
 
                 <br>
@@ -214,7 +220,7 @@ struct HashEntry {
 
                 <figure><center>
                     <img src="img/05_insertion_throughput.png" style="width:55%;height:55%;">
-                    <figcaption><b>Figure 8. </b>Performance of interleaved read/write requests on hashmaps pre-populated to 80% space efficiency.</figcaption>
+                    <figcaption><b>Figure 9. </b>Performance of interleaved read/write requests on hashmaps pre-populated to 80% space efficiency.</figcaption>
                 </figure></center>
 
                 <br>
@@ -227,7 +233,7 @@ struct HashEntry {
 
                 <figure><center>
                     <img src="img/fan_comparison.png" style="width:55%;height:55%;">
-                    <figcaption><b>Figure 9. </b>Comparison of our read performance to Fan et al.</figcaption>
+                    <figcaption><b>Figure 10. </b>Comparison of our read performance to Fan et al.</figcaption>
                 </figure></center>
 
                 <br>
