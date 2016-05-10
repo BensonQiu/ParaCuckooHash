@@ -75,8 +75,6 @@ void CuckooHashMap<T>::put(std::string key, T val) {
         h1 *= SLOTS_PER_BUCKET;
         h2 *= SLOTS_PER_BUCKET;
 
-        //std::cout << "Put Key: " << curr_key << ", Bucket 1: " << h1 << ", Bucket 2: " << h2 << std::endl;
-
         // Look at the first bucket.
         for (unsigned int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
 
@@ -87,7 +85,6 @@ void CuckooHashMap<T>::put(std::string key, T val) {
                 hash_entry->key = curr_key;
                 hash_entry->val = curr_val;
                 m_table[i] = hash_entry;
-                //std::cout <<"Put Key: " << curr_key << " in slot index: " << i << std::endl;
                 return;
             } else if (hash_entry->key == curr_key) {
                 hash_entry->val = curr_val;
@@ -103,7 +100,6 @@ void CuckooHashMap<T>::put(std::string key, T val) {
                 hash_entry->key = curr_key;
                 hash_entry->val = curr_val;
                 m_table[i] = hash_entry;
-                //std::cout <<"Put Key: " << curr_key << " in slot index: " << i << std::endl;
                 return;
             } else if (hash_entry->key == curr_key) {
                 hash_entry->val = curr_val;
@@ -123,8 +119,6 @@ void CuckooHashMap<T>::put(std::string key, T val) {
 
         temp_hash_entry->key = curr_key;
         temp_hash_entry->val = curr_val;
-
-        // std::cout << "Swap " << curr_key << " with " << temp_key << std::endl;
 
         curr_key = temp_key;
         curr_val = temp_val;

@@ -118,77 +118,43 @@ void CuckooFineHashMap<T>::put(std::string key, T val) {
         h1 *= SLOTS_PER_BUCKET;
         h2 *= SLOTS_PER_BUCKET;
 
-        //std::cout << "Put Key: " << curr_key << ", Bucket 1: " << h1 << ", Bucket 2: " << h2 << std::endl;
-
-        //std::cout << "Put 01" << std::endl;
         lock_helper(h1, h2);
-        //std::cout << "Put 02" << std::endl;
 
         // Look at the first bucket.
         for (unsigned int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
 
-            //std::cout << "Bucket 1 about to access i: " << i << std::endl;
             HashEntry* hash_entry = m_table[i];
-            //std::cout << "Bucket 1 done to access i: " << i << std::endl;
 
             if (hash_entry == NULL) {
                 HashEntry* hash_entry = new HashEntry();
                 hash_entry->key = curr_key;
                 hash_entry->val = curr_val;
-
-                //std::cout << "Bucket 1 about to set m_table[i]: " << i << std::endl;
                 m_table[i] = hash_entry;
-                //std::cout << "Bucket 1 done to set m_table[i]: " << i << std::endl;
-
-                //std::cout << "Put 03" << std::endl;
                 unlock_helper(h1, h2);
-                //std::cout << "Put 04" << std::endl;
-
                 return;
             } else if (hash_entry->key == curr_key) {
-
-                //std::cout << "Bucket 1 about to set hash_enttry->val: " << i << std::endl;
                 hash_entry->val = curr_val;
-                //std::cout << "Bucket 1 about to set hash_enttry->val: " << i << std::endl;
-
-                //std::cout << "Put 05" << std::endl;
                 unlock_helper(h1, h2);
-                //std::cout << "Put 06" << std::endl;
                 return;
             }
         }
 
-        //std::cout << "Now looking at the second bucket..." << std::endl;
-
         // Look at the second bucket.
         for (unsigned int i = h2; i < h2 + SLOTS_PER_BUCKET; i++) {
 
-            //std::cout << "Bucket 2 about to access i: " << i << std::endl;
             HashEntry* hash_entry = m_table[i];
-            //std::cout << "Bucket 2 done to access i: " << i << std::endl;
 
             if (hash_entry == NULL) {
                 HashEntry* hash_entry = new HashEntry();
                 hash_entry->key = curr_key;
                 hash_entry->val = curr_val;
 
-                //std::cout << "Bucket 2 about to set m_table[i]: " << i << std::endl;
                 m_table[i] = hash_entry;
-                //std::cout << "Bucket 2 done to set m_table[i]: " << i << std::endl;
-
-                //std::cout << "Put 07" << std::endl;
                 unlock_helper(h1, h2);
-                //std::cout << "Put 08" << std::endl;
                 return;
             } else if (hash_entry->key == curr_key) {
-
-                //std::cout << "Bucket 1 about to set hash_enttry->val: " << i << std::endl;
                 hash_entry->val = curr_val;
-                //std::cout << "Bucket 1 about to set hash_enttry->val: " << i << std::endl;
-
-                //std::cout << "Put 09" << std::endl;
                 unlock_helper(h1, h2);
-                //std::cout << "Put 10" << std::endl;
                 return;
             }
         }
@@ -206,14 +172,10 @@ void CuckooFineHashMap<T>::put(std::string key, T val) {
         temp_hash_entry->key = curr_key;
         temp_hash_entry->val = curr_val;
 
-        // //std::cout << "Swap " << curr_key << " with " << temp_key << std::endl;
-
         curr_key = temp_key;
         curr_val = temp_val;
 
-        //std::cout << "Put 11" << std::endl;
         unlock_helper(h1, h2);
-        //std::cout << "Put 12" << std::endl;
     }
 
     std::cout << "Abort" << std::endl;

@@ -166,16 +166,11 @@ void OptimisticCuckooHashMap<T>::put(std::string key, T val) {
         // If the key can't be placed in either bucket,
         // randomly choose an existing key to evict.
         int index = rand() % (2 * SLOTS_PER_BUCKET);
-        // HashEntry* temp_hash_entry;
         int evicted_index;
         if (0 <= index && index < SLOTS_PER_BUCKET) {
             evicted_index = h1 + index;
-            // path.push_back(h1 + index);
-            // temp_hash_entry = m_table[h1 + index];
         } else {
             evicted_index = h2 + index - SLOTS_PER_BUCKET;
-            // path.push_back(h2 + index - SLOTS_PER_BUCKET);
-            // temp_hash_entry = m_table[h2 + index - SLOTS_PER_BUCKET];
         }
 
         HashEntry* temp_hash_entry;

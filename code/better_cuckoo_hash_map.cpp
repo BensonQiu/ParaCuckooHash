@@ -28,15 +28,7 @@ T BetterCuckooHashMap<T>::get(std::string key) {
     h2 = 0;
 
     hashlittle2(key.c_str(), key.length(), &h1, &h2);
-
-
-    //h1 = hashlittle(key.c_str(), key.length(), 0);
-    //std::hash<std::string> hasher;
-    //h1 = hasher(key);
-
     unsigned char tag = tag_hash(h1);
-
-    //h2 = h1 ^ (tag * 0x5bd1e995);
 
     h1 = h1 % m_num_buckets;
     h2 = h2 % m_num_buckets;
@@ -81,21 +73,13 @@ void BetterCuckooHashMap<T>::put(std::string key, T val) {
 
 	hashlittle2(curr_key.c_str(), curr_key.length(), &h1, &h2);
 
-        //h1 = hashlittle(key.c_str(), key.length(), 0);
-        //std::hash<std::string> hasher;
-        //h1 = hasher(key);
-
         unsigned char tag = tag_hash(h1);
-        //h2 = h1 ^ (tag * 0x5bd1e995);
 
         h1 = h1 % m_num_buckets;
         h2 = h2 % m_num_buckets;
 
         h1 *= SLOTS_PER_BUCKET;
         h2 *= SLOTS_PER_BUCKET;
-
-        // std::cout << "Put Key: " << curr_key << ", Bucket 1: " << h1 << ", Bucket 2: " << h2 << std::endl;
-        // std::cout << "Put Tag: " << (int) tag << std::endl;
 
         // Look at the first bucket.
         for (unsigned int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
@@ -108,7 +92,6 @@ void BetterCuckooHashMap<T>::put(std::string key, T val) {
 
                 m_table[i].tag = tag;
                 m_table[i].ptr = hash_entry;
-                // std::cout << "Put Key: " << curr_key << " in slot index: " << i << std::endl;
                 return;
             } else if (m_table[i].ptr->key == curr_key) {
                 m_table[i].ptr->val = curr_val;
@@ -128,7 +111,6 @@ void BetterCuckooHashMap<T>::put(std::string key, T val) {
 
                 m_table[i].tag = tag;
                 m_table[i].ptr = hash_entry;
-                // std::cout <<"Put Key: " << curr_key << " in slot index: " << i << std::endl;
                 return;
             } else if (m_table[i].ptr->key == curr_key) {
                 m_table[i].ptr->val = curr_val;
@@ -149,8 +131,6 @@ void BetterCuckooHashMap<T>::put(std::string key, T val) {
         temp_hash_pointer->tag = tag;
         temp_hash_pointer->ptr->key = curr_key;
         temp_hash_pointer->ptr->val = curr_val;
-
-        //std::cout << "Swap " << curr_key << " with " << temp_key << std::endl;
 
         curr_key = temp_key;
         curr_val = temp_val;

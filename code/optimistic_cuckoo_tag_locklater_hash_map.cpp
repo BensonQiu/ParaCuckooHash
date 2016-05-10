@@ -56,12 +56,6 @@ T OptimisticCuckooTagLockLaterHashMap<T>::get(std::string key) {
     for (unsigned int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
         HashPointer hash_pointer = m_table[i];
 
-        if (hash_pointer.ptr == NULL){
-          //std::cout << "For Key: " << key << " looking at empty index " << i << std::endl;
-        }
-        else{
-          //std::cout << "For Key: " << key << " looking at index " << i  << " with entry " << hash_pointer.ptr->key << std::endl;
-        }
         if (hash_pointer.tag == tag && hash_pointer.ptr != NULL) {
             HashEntry* hash_entry = hash_pointer.ptr;
             if (key == hash_entry->key) {
@@ -78,15 +72,8 @@ T OptimisticCuckooTagLockLaterHashMap<T>::get(std::string key) {
     // Look at the second bucket.
     for (unsigned int i = h2; i < h2 + SLOTS_PER_BUCKET; i++) {
 
-      // HashEntry* hash_entry = m_table[i];
-      HashPointer hash_pointer = m_table[i];
-
-      if (hash_pointer.ptr == NULL){
-        //std::cout << "For Key: " << key << " looking at empty index " << i << std::endl;
-        }
-        else{
-          //std::cout << "For Key: " << key << " looking at index " << i  << " with entry " << hash_pointer.ptr->key << std::endl;
-        }
+        // HashEntry* hash_entry = m_table[i];
+        HashPointer hash_pointer = m_table[i];
 
         if (hash_pointer.tag == tag && hash_pointer.ptr != NULL) {
             HashEntry* hash_entry = hash_pointer.ptr;
@@ -108,7 +95,6 @@ T OptimisticCuckooTagLockLaterHashMap<T>::get(std::string key) {
     /*
     throw KeyNotFoundError(key.c_str());
     */
-
     return "";
 }
 
@@ -162,7 +148,6 @@ bool OptimisticCuckooTagLockLaterHashMap<T>::put_helper(std::string key, T val) 
         // Look at the first bucket.
         for (unsigned int i = h1; i < h1 + SLOTS_PER_BUCKET; i++) {
 
-            // HashEntry* hash_entry = m_table[i];
             HashPointer hash_pointer = m_table[i];
             if (hash_pointer.ptr == NULL) {
                 // Found an empty bucket slot for the current key.
@@ -214,7 +199,6 @@ bool OptimisticCuckooTagLockLaterHashMap<T>::put_helper(std::string key, T val) 
         // If the key can't be placed in either bucket,
         // randomly choose an existing key to evict.
         int index = rand() % (2 * SLOTS_PER_BUCKET);
-        // HashEntry* temp_hash_entry;
         int evicted_index;
         if (0 <= index && index < SLOTS_PER_BUCKET) {
             evicted_index = h1 + index;
@@ -223,11 +207,9 @@ bool OptimisticCuckooTagLockLaterHashMap<T>::put_helper(std::string key, T val) 
         }
 
         HashEntry* temp_hash_entry;
-        // HashPointer temp_hash_pointer;
         if (m_visited_bitmap[evicted_index] == 0) {
             m_visited_bitmap[evicted_index] = 1;
             path.push_back(evicted_index);
-            //std::cout << "For key: " << curr_key << " evicted index: " << evicted_index << std::endl;
             temp_hash_entry = m_table[evicted_index].ptr;
         } else {
             // Try to evict another index so that we don't get a cycle.
@@ -249,20 +231,18 @@ bool OptimisticCuckooTagLockLaterHashMap<T>::put_helper(std::string key, T val) 
             }
             std::cout << " Cycle Case: " << key << std::endl;
 
-            //unwind the paths that you've seen
+            // Unwind the paths that you've seen
             std::vector<int>::reverse_iterator path_iterator = path.rbegin();
 
             for (; path_iterator != path.rend(); path_iterator++) {
 
               int from_index = *path_iterator;
 
-              //std::cout << "Setting bitmap at back to 0 " << from_index << std::endl;
               m_visited_bitmap[from_index] = 0;
 
             }
             if (path.size() >= 1){
               int first_index = path.front();
-              //std::cout << "First Index: " << first_index << std::endl;
               m_visited_bitmap[first_index] = 0;
             }
 
@@ -309,7 +289,6 @@ EvictedKey:
 
         // Someone else wrote to the key
         if (m_table[index].ptr != NULL) {
-          //std::cout << "Empty slot at index: " << index << " modified, aborting for key: " << key<< std::endl;
           m_write_mutex.unlock();
           return false;
         }
@@ -322,8 +301,6 @@ EvictedKey:
         (&m_table[index])->tag = tag;
         m_table[index].ptr = hash_entry;
         __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
-
-        //std::cout << "Successfully Wrote key: " << key << " at index " << index << ", key is now " << m_table[index].ptr-> key << std::endl;
 
         m_write_mutex.unlock();
 
@@ -342,13 +319,9 @@ EvictedKey:
 
     int last_empty_index = *path_iterator;
     if (m_table[last_empty_index].ptr != NULL){
-      //std::cout << "Empty slot at index: " << last_empty_index << " modified, aborting for key: " << key<< std::endl;
         m_write_mutex.unlock();
         return false;
     }
-
-
-    //std::cout << "Key " << key << " path size " << path.size() << std::endl;
 
     for (; key_version_iterator_2 != key_version_array.end(); key_version_iterator_2++){
 
@@ -356,21 +329,15 @@ EvictedKey:
       int key_version_index = *key_version_iterator_2;
 
       if ((int)m_key_version_counters[key_version_index] != key_version_entry){
-        //std::cout << "Path modified, aborting for key: " << key << std::endl;
-        //unwind the paths that you've seen
+        // Unwind the paths that you've seen
         std::vector<int>::reverse_iterator path_iterator = path.rbegin();
 
         for (; path_iterator != path.rend(); path_iterator++) {
-
           int from_index = *path_iterator;
-
-          //std::cout << "Setting bitmap at back to 0 " << from_index << std::endl;
           m_visited_bitmap[from_index] = 0;
-
         }
         if (path.size() >= 1){
           int first_index = path.front();
-          //std::cout << "First Index: " << first_index << std::endl;
           m_visited_bitmap[first_index] = 0;
         }
         m_write_mutex.unlock();
@@ -399,7 +366,6 @@ EvictedKey:
         if (m_table[from_index].ptr != NULL) {
             delete m_table[from_index].ptr;
         }
-        // m_table[to_index] = *to_hash_pointer;
         __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
 
         to_index = from_index;
@@ -417,7 +383,6 @@ EvictedKey:
     hash_pointer->ptr->val = val;
     __sync_fetch_and_add(&m_key_version_counters[key_version_index], 1);
 
-    //std::cout << "Successfully Wrote with evictions for key: " << key << std::endl;
     m_write_mutex.unlock();
     return true;
 }

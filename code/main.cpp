@@ -1,3 +1,8 @@
+/*
+ *
+ * This file is deprecated! Use benchmark/main.cpp
+ *
+ */
 #include <iostream>
 #include <unordered_map>
 #include <cassert>
